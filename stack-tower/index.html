@@ -1,0 +1,1097 @@
+<!doctype html>
+<html lang="lo">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>ຫໍຄອຍ — Stack Tower</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* === Base Reset === */
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        font-size: 16px;
+        -webkit-text-size-adjust: 100%;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      :root {
+        --bg-primary: #0f0f1a;
+        --bg-secondary: #1a1a2e;
+        --bg-glass: rgba(255, 255, 255, 0.08);
+        --border-glass: rgba(255, 255, 255, 0.12);
+        --text-primary: #f0f0f5;
+        --text-secondary: #a0a0b8;
+        --accent-primary: #7c3aed;
+        --accent-secondary: #2563eb;
+        --accent-gradient: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+        --accent-glow: rgba(124, 58, 237, 0.3);
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --font-family:
+          "Noto Sans Lao", "Phetsarath OT", "Saysettha OT", system-ui,
+          sans-serif;
+      }
+
+      body {
+        font-family: var(--font-family);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        min-height: 100vh;
+        min-height: 100dvh;
+        overflow: hidden;
+        overscroll-behavior: none;
+        -webkit-font-smoothing: antialiased;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* === Background === */
+      .bg-decoration {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+      }
+      .bg-decoration::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background:
+          radial-gradient(
+            ellipse at 30% 20%,
+            rgba(124, 58, 237, 0.08) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            ellipse at 70% 80%,
+            rgba(37, 99, 235, 0.06) 0%,
+            transparent 50%
+          );
+      }
+
+      /* === Header === */
+      .game-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        position: relative;
+        z-index: 10;
+      }
+      @supports (padding: env(safe-area-inset-top)) {
+        .game-header {
+          padding-top: calc(12px + env(safe-area-inset-top));
+        }
+      }
+      .game-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .game-title .icon {
+        font-size: 1.3rem;
+      }
+      .header-scores {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+      }
+      .header-score {
+        text-align: center;
+      }
+      .header-score-label {
+        font-size: 0.65rem;
+        color: var(--text-secondary);
+        letter-spacing: 0.05em;
+      }
+      .header-score-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+      }
+      .header-score-value.best {
+        background: var(--accent-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      /* === Canvas Area === */
+      .game-area {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        padding: 0 8px;
+      }
+      canvas {
+        display: block;
+        border-radius: 12px;
+        max-width: 100%;
+        touch-action: none;
+      }
+
+      /* === Tap Hint === */
+      .tap-hint {
+        position: absolute;
+        bottom: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        animation: tapPulse 1.5s ease-in-out infinite;
+        pointer-events: none;
+        white-space: nowrap;
+      }
+      @keyframes tapPulse {
+        0%,
+        100% {
+          opacity: 0.5;
+          transform: translateX(-50%) scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: translateX(-50%) scale(1.05);
+        }
+      }
+
+      /* === Overlay === */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 15, 26, 0.88);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 24px;
+        z-index: 200;
+        opacity: 1;
+        transition: opacity 0.4s ease;
+      }
+      .overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .overlay-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+        text-align: center;
+      }
+      .overlay-subtitle {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-bottom: 32px;
+        text-align: center;
+      }
+      .overlay-emoji {
+        font-size: 4rem;
+        margin-bottom: 16px;
+        animation: bounceIn 0.5s ease;
+      }
+      @keyframes bounceIn {
+        0% {
+          transform: scale(0);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      /* Stats grid */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        width: 100%;
+        max-width: 300px;
+        margin-bottom: 24px;
+      }
+      .stat-item {
+        text-align: center;
+        padding: 14px 8px;
+        background: var(--bg-glass);
+        border: 1px solid var(--border-glass);
+        border-radius: 12px;
+      }
+      .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+      .stat-label {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        margin-top: 4px;
+      }
+
+      /* New record badge */
+      .new-record {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 14px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--success);
+        margin-bottom: 20px;
+        animation: scaleIn 0.4s ease 0.3s both;
+      }
+      @keyframes scaleIn {
+        from {
+          opacity: 0;
+          transform: scale(0.7);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      /* === Buttons === */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 16px 40px;
+        border: none;
+        border-radius: 999px;
+        font-family: var(--font-family);
+        font-size: 1.15rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        position: relative;
+        overflow: hidden;
+        touch-action: manipulation;
+      }
+      .btn::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at center,
+          rgba(255, 255, 255, 0.2) 0%,
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+      .btn:active::after {
+        opacity: 1;
+      }
+      .btn:active {
+        transform: scale(0.96);
+      }
+
+      .btn-primary {
+        background: var(--accent-gradient);
+        color: white;
+        box-shadow: 0 0 20px var(--accent-glow);
+        min-width: 220px;
+      }
+      .btn-primary:active {
+        box-shadow: 0 0 35px var(--accent-glow);
+      }
+
+      .btn-secondary {
+        background: var(--bg-glass);
+        color: var(--text-primary);
+        border: 1px solid var(--border-glass);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        min-width: 220px;
+      }
+
+      .btn-icon {
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border-radius: 50%;
+        font-size: 1.2rem;
+        min-width: 0;
+        background: var(--bg-glass);
+        color: var(--text-primary);
+        border: 1px solid var(--border-glass);
+      }
+
+      .btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        max-width: 260px;
+      }
+
+      /* === Perfect Text === */
+      .perfect-popup {
+        position: fixed;
+        top: 35%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--success);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 50;
+        text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+      }
+      .perfect-popup.show {
+        animation: perfectAnim 0.8s ease-out forwards;
+      }
+      @keyframes perfectAnim {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.5);
+        }
+        30% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1.2);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, -60%) scale(1);
+        }
+      }
+
+      /* Sound toggle */
+      .sound-btn {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+      }
+      @supports (padding: env(safe-area-inset-top)) {
+        .sound-btn {
+          top: calc(12px + env(safe-area-inset-top));
+        }
+      }
+
+      /* === Start screen decoration === */
+      .start-blocks {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: 24px;
+      }
+      .start-block {
+        height: 20px;
+        border-radius: 4px;
+        animation: stackAppear 0.4s ease backwards;
+      }
+      .start-block:nth-child(1) {
+        width: 120px;
+        background: #ef4444;
+        animation-delay: 0.1s;
+      }
+      .start-block:nth-child(2) {
+        width: 110px;
+        background: #f59e0b;
+        animation-delay: 0.2s;
+      }
+      .start-block:nth-child(3) {
+        width: 100px;
+        background: #10b981;
+        animation-delay: 0.3s;
+      }
+      .start-block:nth-child(4) {
+        width: 90px;
+        background: #3b82f6;
+        animation-delay: 0.4s;
+      }
+      .start-block:nth-child(5) {
+        width: 80px;
+        background: #8b5cf6;
+        animation-delay: 0.5s;
+      }
+      @keyframes stackAppear {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-decoration"></div>
+
+    <!-- ===== START SCREEN ===== -->
+    <div class="overlay" id="startScreen">
+      <div class="start-blocks">
+        <div class="start-block"></div>
+        <div class="start-block"></div>
+        <div class="start-block"></div>
+        <div class="start-block"></div>
+        <div class="start-block"></div>
+      </div>
+      <div class="overlay-title">ຫໍຄອຍ</div>
+      <div class="overlay-subtitle">ແຕະເພື່ອວາງບລ໋ອກ — ຊ້ອນໃຫ້ສູງທີ່ສຸດ!</div>
+      <div class="btn-group">
+        <button class="btn btn-primary" id="startBtn" onclick="startGame()">
+          🎮 ເລີ່ມຫຼິ້ນ
+        </button>
+      </div>
+      <div style="margin-top: 20px; text-align: center">
+        <div class="header-score-label">ຄະແນນສູງສຸດ</div>
+        <div class="header-score-value best" id="startBest">0</div>
+      </div>
+    </div>
+
+    <!-- ===== GAME OVER SCREEN ===== -->
+    <div class="overlay hidden" id="gameOverScreen">
+      <div class="overlay-emoji" id="gameOverEmoji">😢</div>
+      <div class="overlay-title">ຈົບເກມ</div>
+      <div class="new-record hidden" id="newRecordBadge">🏆 ສະຖິຕິໃໝ່!</div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value" id="finalScore">0</div>
+          <div class="stat-label">ຄະແນນ</div>
+        </div>
+        <div class="stat-item">
+          <div
+            class="stat-value best"
+            id="finalBest"
+            style="
+              background: var(--accent-gradient);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+            "
+          >
+            0
+          </div>
+          <div class="stat-label">ດີທີ່ສຸດ</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="finalPerfects">0</div>
+          <div class="stat-label">ສົມບູນ</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="finalGames">0</div>
+          <div class="stat-label">ຫຼິ້ນແລ້ວ</div>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="startGame()">🔄 ລອງໃໝ່</button>
+        <button class="btn btn-secondary" onclick="showStart()">
+          🏠 ໜ້າຫຼັກ
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== GAME UI ===== -->
+    <div class="game-header" id="gameHeader" style="display: none">
+      <div class="game-title">
+        <span class="icon">🏗️</span>
+        <span>ຫໍຄອຍ</span>
+      </div>
+      <div class="header-scores">
+        <div class="header-score">
+          <div class="header-score-label">ຄະແນນ</div>
+          <div class="header-score-value" id="scoreDisplay">0</div>
+        </div>
+        <div class="header-score">
+          <div class="header-score-label">ດີທີ່ສຸດ</div>
+          <div class="header-score-value best" id="bestDisplay">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-area" id="gameArea" style="display: none">
+      <canvas id="gameCanvas"></canvas>
+      <div class="tap-hint" id="tapHint">👆 ແຕະເພື່ອວາງ</div>
+    </div>
+
+    <div class="perfect-popup" id="perfectPopup">ສົມບູນ! ✨</div>
+
+    <button
+      class="btn btn-icon sound-btn"
+      id="soundBtn"
+      onclick="toggleSound()"
+      style="position: fixed"
+    >
+      🔊
+    </button>
+
+    <script>
+      // =============================================
+      // GAME STATE
+      // =============================================
+      const GAME_ID = "stack-tower";
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+
+      let gameRunning = false;
+      let score = 0;
+      let perfectCount = 0;
+      let consecutivePerfects = 0;
+
+      // Block properties
+      let blocks = [];
+      let currentBlock = null;
+      let blockSpeed = 2;
+      let blockDirection = 1;
+      let baseBlockWidth = 0;
+      let blockHeight = 0;
+      let cameraY = 0;
+      let targetCameraY = 0;
+
+      // Falling pieces
+      let fallingPieces = [];
+
+      // Colors
+      const COLORS = [
+        "#EF4444",
+        "#F97316",
+        "#F59E0B",
+        "#EAB308",
+        "#84CC16",
+        "#22C55E",
+        "#10B981",
+        "#14B8A6",
+        "#06B6D4",
+        "#0EA5E9",
+        "#3B82F6",
+        "#6366F1",
+        "#8B5CF6",
+        "#A855F7",
+        "#D946EF",
+        "#EC4899",
+        "#F43F5E",
+      ];
+
+      // Audio
+      let audioCtx = null;
+      let soundEnabled = true;
+
+      // =============================================
+      // STORAGE HELPERS
+      // =============================================
+      function save(key, value) {
+        try {
+          localStorage.setItem(`game_${GAME_ID}_${key}`, JSON.stringify(value));
+        } catch (e) {}
+      }
+      function load(key, def = null) {
+        try {
+          const r = localStorage.getItem(`game_${GAME_ID}_${key}`);
+          return r !== null ? JSON.parse(r) : def;
+        } catch (e) {
+          return def;
+        }
+      }
+      function getHighScore() {
+        return load("highScore", 0);
+      }
+      function updateHighScore(s) {
+        const best = getHighScore();
+        if (s > best) {
+          save("highScore", s);
+          return true;
+        }
+        return false;
+      }
+      function incrementGames() {
+        const g = load("totalGames", 0) + 1;
+        save("totalGames", g);
+        return g;
+      }
+
+      // =============================================
+      // AUDIO
+      // =============================================
+      function initAudio() {
+        if (!audioCtx)
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+      }
+
+      function playTone(freq, dur, type = "sine", vol = 0.2) {
+        if (!soundEnabled || !audioCtx) return;
+        try {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = type;
+          osc.frequency.value = freq;
+          gain.gain.value = vol;
+          gain.gain.exponentialRampToValueAtTime(
+            0.001,
+            audioCtx.currentTime + dur / 1000,
+          );
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + dur / 1000);
+        } catch (e) {}
+      }
+
+      function playPlace() {
+        playTone(400 + score * 15, 80, "sine", 0.2);
+      }
+      function playPerfect() {
+        playTone(523, 80, "sine", 0.25);
+        setTimeout(() => playTone(659, 80, "sine", 0.25), 80);
+        setTimeout(() => playTone(784, 100, "sine", 0.25), 160);
+      }
+      function playFail() {
+        playTone(200, 300, "sawtooth", 0.15);
+      }
+
+      function toggleSound() {
+        soundEnabled = !soundEnabled;
+        document.getElementById("soundBtn").textContent = soundEnabled
+          ? "🔊"
+          : "🔇";
+      }
+
+      // =============================================
+      // CANVAS SIZING
+      // =============================================
+      function resizeCanvas() {
+        const area = document.getElementById("gameArea");
+        const rect = area.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+
+        const w = Math.min(rect.width - 16, 420);
+        const h = Math.min(rect.height - 16, 700);
+
+        canvas.style.width = w + "px";
+        canvas.style.height = h + "px";
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        ctx.scale(dpr, dpr);
+
+        baseBlockWidth = w * 0.55;
+        blockHeight = Math.max(24, Math.min(32, h / 22));
+      }
+
+      // =============================================
+      // GAME LOGIC
+      // =============================================
+      function getColor(index) {
+        return COLORS[index % COLORS.length];
+      }
+
+      function createBlock(width, x) {
+        return {
+          x: x,
+          y: 0,
+          width: width,
+          color: getColor(blocks.length),
+          placed: false,
+        };
+      }
+
+      function spawnMovingBlock() {
+        const prevBlock = blocks[blocks.length - 1];
+        const w = prevBlock.width;
+        const canvasW = parseFloat(canvas.style.width);
+
+        currentBlock = {
+          x: -w,
+          y: prevBlock.y - blockHeight,
+          width: w,
+          color: getColor(blocks.length),
+          placed: false,
+        };
+
+        blockDirection = 1;
+        // Speed increases with score
+        blockSpeed = 2 + Math.min(score * 0.15, 6);
+      }
+
+      function placeBlock() {
+        if (!currentBlock || !gameRunning) return;
+
+        const prev = blocks[blocks.length - 1];
+        const canvasW = parseFloat(canvas.style.width);
+
+        // Calculate overlap
+        const overlapLeft = Math.max(currentBlock.x, prev.x);
+        const overlapRight = Math.min(
+          currentBlock.x + currentBlock.width,
+          prev.x + prev.width,
+        );
+        const overlapWidth = overlapRight - overlapLeft;
+
+        if (overlapWidth <= 0) {
+          // Missed completely — game over
+          // Add the entire block as falling piece
+          fallingPieces.push({
+            x: currentBlock.x,
+            y: currentBlock.y,
+            width: currentBlock.width,
+            color: currentBlock.color,
+            vy: 0,
+            vx: blockDirection * 2,
+          });
+          gameOver();
+          return;
+        }
+
+        const PERFECT_THRESHOLD = 3;
+        const diff = Math.abs(currentBlock.x - prev.x);
+
+        if (diff < PERFECT_THRESHOLD) {
+          // Perfect placement!
+          currentBlock.x = prev.x;
+          currentBlock.width = prev.width;
+          currentBlock.placed = true;
+          blocks.push(currentBlock);
+          consecutivePerfects++;
+          score++;
+
+          // Grow block slightly on consecutive perfects
+          if (consecutivePerfects > 1 && currentBlock.width < baseBlockWidth) {
+            currentBlock.width = Math.min(
+              currentBlock.width + 4,
+              baseBlockWidth,
+            );
+          }
+
+          perfectCount++;
+          showPerfect();
+          playPerfect();
+          vibrate([30, 40, 30]);
+        } else {
+          consecutivePerfects = 0;
+
+          // Cut the overhanging part
+          const placedBlock = {
+            x: overlapLeft,
+            y: currentBlock.y,
+            width: overlapWidth,
+            color: currentBlock.color,
+            placed: true,
+          };
+          blocks.push(placedBlock);
+          score++;
+
+          // Create falling piece for cut part
+          if (currentBlock.x < prev.x) {
+            // Cut left side
+            fallingPieces.push({
+              x: currentBlock.x,
+              y: currentBlock.y,
+              width: prev.x - currentBlock.x,
+              color: currentBlock.color,
+              vy: 0,
+              vx: -2,
+            });
+          } else {
+            // Cut right side
+            const cutX = prev.x + prev.width;
+            fallingPieces.push({
+              x: cutX,
+              y: currentBlock.y,
+              width: currentBlock.x + currentBlock.width - cutX,
+              color: currentBlock.color,
+              vy: 0,
+              vx: 2,
+            });
+          }
+
+          playPlace();
+          vibrate(30);
+        }
+
+        // Update score display
+        document.getElementById("scoreDisplay").textContent = score;
+
+        // Update camera
+        const canvasH = parseFloat(canvas.style.height);
+        targetCameraY = Math.max(
+          0,
+          blocks.length * blockHeight - canvasH + 150,
+        );
+
+        // Spawn next
+        currentBlock = null;
+        setTimeout(() => {
+          if (gameRunning) spawnMovingBlock();
+        }, 150);
+      }
+
+      function gameOver() {
+        gameRunning = false;
+        playFail();
+        vibrate([100, 30, 100]);
+
+        const isNew = updateHighScore(score);
+        const totalGames = incrementGames();
+
+        document.getElementById("finalScore").textContent = score;
+        document.getElementById("finalBest").textContent = getHighScore();
+        document.getElementById("finalPerfects").textContent = perfectCount;
+        document.getElementById("finalGames").textContent = totalGames;
+
+        const badge = document.getElementById("newRecordBadge");
+        const emoji = document.getElementById("gameOverEmoji");
+        if (isNew && score > 0) {
+          badge.classList.remove("hidden");
+          emoji.textContent = "🏆";
+        } else {
+          badge.classList.add("hidden");
+          emoji.textContent = score > 5 ? "😊" : "😢";
+        }
+
+        // Delay showing overlay so player sees failure
+        setTimeout(() => {
+          document.getElementById("gameOverScreen").classList.remove("hidden");
+        }, 600);
+      }
+
+      function showPerfect() {
+        const popup = document.getElementById("perfectPopup");
+        popup.classList.remove("show");
+        void popup.offsetWidth; // reflow
+        popup.classList.add("show");
+      }
+
+      function vibrate(pattern) {
+        if (navigator.vibrate) navigator.vibrate(pattern);
+      }
+
+      // =============================================
+      // RENDER
+      // =============================================
+      function render() {
+        const w = parseFloat(canvas.style.width);
+        const h = parseFloat(canvas.style.height);
+        ctx.clearRect(0, 0, w, h);
+
+        // Smooth camera
+        cameraY += (targetCameraY - cameraY) * 0.1;
+
+        ctx.save();
+        ctx.translate(0, cameraY);
+
+        // Draw placed blocks
+        for (let i = 0; i < blocks.length; i++) {
+          const b = blocks[i];
+          const y = h - blockHeight - i * blockHeight;
+          drawBlock(b.x, y, b.width, blockHeight, b.color, i);
+        }
+
+        // Draw current moving block
+        if (currentBlock && gameRunning) {
+          const y = h - blockHeight - blocks.length * blockHeight;
+          drawBlock(
+            currentBlock.x,
+            y,
+            currentBlock.width,
+            blockHeight,
+            currentBlock.color,
+            blocks.length,
+          );
+        }
+
+        // Draw falling pieces
+        for (let i = fallingPieces.length - 1; i >= 0; i--) {
+          const p = fallingPieces[i];
+          const y = h - blockHeight - blocks.length * blockHeight + p.y;
+          ctx.globalAlpha = Math.max(0, 1 - p.y / 300);
+          drawBlock(p.x + p.vx * 10, y + p.y, p.width, blockHeight, p.color, 0);
+          ctx.globalAlpha = 1;
+          p.vy += 0.5;
+          p.y += p.vy;
+          if (p.y > 500) fallingPieces.splice(i, 1);
+        }
+
+        ctx.restore();
+
+        // Draw base platform
+        const platformY = h - 4;
+        ctx.fillStyle = "rgba(255,255,255,0.1)";
+        ctx.fillRect(0, platformY, w, 4);
+      }
+
+      function drawBlock(x, y, width, height, color, index) {
+        // Main block
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        roundRect(ctx, x, y, width, height, 3);
+        ctx.fill();
+
+        // Top highlight
+        ctx.fillStyle = "rgba(255,255,255,0.15)";
+        ctx.fillRect(x + 1, y + 1, width - 2, height * 0.35);
+
+        // Bottom shadow
+        ctx.fillStyle = "rgba(0,0,0,0.15)";
+        ctx.fillRect(x + 1, y + height * 0.7, width - 2, height * 0.28);
+      }
+
+      function roundRect(ctx, x, y, w, h, r) {
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+      }
+
+      // =============================================
+      // GAME LOOP
+      // =============================================
+      function update() {
+        if (!gameRunning) return;
+
+        const canvasW = parseFloat(canvas.style.width);
+
+        if (currentBlock) {
+          currentBlock.x += blockSpeed * blockDirection;
+
+          // Bounce off edges
+          if (currentBlock.x + currentBlock.width > canvasW) {
+            currentBlock.x = canvasW - currentBlock.width;
+            blockDirection = -1;
+          }
+          if (currentBlock.x < 0) {
+            currentBlock.x = 0;
+            blockDirection = 1;
+          }
+        }
+      }
+
+      function gameLoop() {
+        update();
+        render();
+        requestAnimationFrame(gameLoop);
+      }
+
+      // =============================================
+      // GAME CONTROL
+      // =============================================
+      function startGame() {
+        initAudio();
+
+        score = 0;
+        perfectCount = 0;
+        consecutivePerfects = 0;
+        blocks = [];
+        fallingPieces = [];
+        currentBlock = null;
+        cameraY = 0;
+        targetCameraY = 0;
+
+        // Hide overlays, show game
+        document.getElementById("startScreen").classList.add("hidden");
+        document.getElementById("gameOverScreen").classList.add("hidden");
+        document.getElementById("gameHeader").style.display = "flex";
+        document.getElementById("gameArea").style.display = "flex";
+        document.getElementById("tapHint").style.display = "";
+
+        document.getElementById("scoreDisplay").textContent = "0";
+        document.getElementById("bestDisplay").textContent = getHighScore();
+
+        resizeCanvas();
+
+        const canvasW = parseFloat(canvas.style.width);
+
+        // Create base block
+        blocks.push({
+          x: (canvasW - baseBlockWidth) / 2,
+          y: 0,
+          width: baseBlockWidth,
+          color: getColor(0),
+          placed: true,
+        });
+
+        gameRunning = true;
+        spawnMovingBlock();
+      }
+
+      function showStart() {
+        document.getElementById("startScreen").classList.remove("hidden");
+        document.getElementById("gameOverScreen").classList.add("hidden");
+        document.getElementById("gameHeader").style.display = "none";
+        document.getElementById("gameArea").style.display = "none";
+        document.getElementById("startBest").textContent = getHighScore();
+      }
+
+      // =============================================
+      // INPUT HANDLING
+      // =============================================
+      function handleTap(e) {
+        e.preventDefault();
+        if (!gameRunning) return;
+
+        // Hide tap hint after first tap
+        document.getElementById("tapHint").style.display = "none";
+
+        placeBlock();
+      }
+
+      // Touch events
+      document.addEventListener("touchstart", handleTap, { passive: false });
+      // Mouse fallback
+      document.addEventListener("mousedown", function (e) {
+        // Don't trigger on buttons
+        if (e.target.tagName === "BUTTON" || e.target.closest("button")) return;
+        handleTap(e);
+      });
+
+      // Prevent default touch behaviors on game area
+      document.addEventListener(
+        "touchmove",
+        function (e) {
+          e.preventDefault();
+        },
+        { passive: false },
+      );
+
+      // =============================================
+      // INIT
+      // =============================================
+      window.addEventListener("resize", () => {
+        if (gameRunning) resizeCanvas();
+      });
+
+      // Load initial best score
+      document.getElementById("startBest").textContent = getHighScore();
+
+      // Start render loop
+      gameLoop();
+    </script>
+  </body>
+</html>

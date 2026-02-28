@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ຈັງຫວະ — Rhythm Tap</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+    :root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10B981;--warning:#F59E0B;--danger:#EF4444;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+    .bg{position:fixed;inset:0;z-index:-1;pointer-events:none}
+    .bg::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+
+    .overlay{position:fixed;inset:0;z-index:100;background:rgba(15,15,26,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;opacity:1;transition:opacity 0.4s}
+    .overlay.hidden{opacity:0;pointer-events:none}
+    .ov-emoji{font-size:3.5rem;margin-bottom:12px;animation:bounceIn 0.5s ease}
+    @keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+    .ov-title{font-size:2.2rem;font-weight:800;text-align:center;margin-bottom:6px}
+    .ov-sub{font-size:0.95rem;color:var(--text2);text-align:center;margin-bottom:28px;max-width:300px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 36px;border:none;border-radius:999px;font-family:var(--font);font-size:1.1rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:200px}
+    .btn:active{transform:scale(0.96)}
+    .btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}
+    .btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}
+    .btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px;align-items:center}
+    .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}
+    .stat-item{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}
+    .stat-value{font-size:1.8rem;font-weight:700}
+    .stat-value.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .stat-label{font-size:0.7rem;color:var(--text2);margin-top:4px}
+    .new-record{display:inline-flex;gap:6px;padding:4px 14px;border-radius:999px;font-size:0.8rem;font-weight:600;background:rgba(16,185,129,0.15);color:var(--success);margin-bottom:16px}
+    .new-record.hidden{display:none}
+
+    /* Game */
+    .game-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;z-index:10}
+    @supports(padding:env(safe-area-inset-top)){.game-header{padding-top:calc(10px+env(safe-area-inset-top))}}
+    .game-title{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+    .scores{display:flex;gap:14px}.score-box{text-align:center}.score-lbl{font-size:0.55rem;color:var(--text2)}.score-val{font-size:1rem;font-weight:700}
+    .score-val.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+    /* Lanes */
+    .lanes-area{flex:1;display:flex;position:relative;overflow:hidden}
+    .lane{flex:1;position:relative;border-right:1px solid rgba(255,255,255,0.05)}
+    .lane:last-child{border-right:none}
+
+    /* Hit zone */
+    .hit-zone{position:absolute;bottom:0;left:0;right:0;height:80px;display:flex}
+    .hit-btn{flex:1;border:none;background:transparent;position:relative;cursor:pointer;touch-action:manipulation}
+    .hit-btn::before{content:'';position:absolute;top:10px;left:8px;right:8px;bottom:10px;border:2px solid rgba(255,255,255,0.15);border-radius:12px;transition:all 0.1s}
+    .hit-btn:active::before{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.3)}
+    @supports(padding:env(safe-area-inset-bottom)){.hit-zone{bottom:env(safe-area-inset-bottom)}}
+
+    /* Note */
+    .note{position:absolute;left:10%;width:80%;height:40px;border-radius:8px;will-change:transform}
+
+    /* Combo */
+    .combo-area{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;z-index:5}
+    .combo-text{font-size:1.5rem;font-weight:800;opacity:0}
+    .combo-text.show{animation:comboPop 0.5s ease forwards}
+    @keyframes comboPop{0%{opacity:0;transform:scale(0.5)}30%{opacity:1;transform:scale(1.2)}100%{opacity:0;transform:scale(1) translateY(-20px)}}
+
+    /* Hit feedback */
+    .hit-feedback{position:absolute;bottom:80px;width:100%;text-align:center;font-size:0.8rem;font-weight:700;pointer-events:none;z-index:5}
+    .hit-feedback span{display:inline-block;animation:hitFade 0.4s ease forwards}
+    @keyframes hitFade{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-15px)}}
+
+    .sound-btn{position:fixed;top:12px;right:12px;z-index:200;width:40px;height:40px;padding:0;border-radius:50%;font-size:1.1rem;background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass);cursor:pointer;touch-action:manipulation}
+    @supports(padding:env(safe-area-inset-top)){.sound-btn{top:calc(12px+env(safe-area-inset-top))}}
+
+    /* Speed select */
+    .speed-select{display:flex;gap:10px;margin-bottom:24px}
+    .speed-btn{padding:10px 18px;border:2px solid var(--border-glass);border-radius:12px;background:var(--bg-glass);color:var(--text);font-family:var(--font);font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;touch-action:manipulation}
+    .speed-btn.active{border-color:#7C3AED;background:rgba(124,58,237,0.15)}
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+
+  <div class="overlay" id="startScreen">
+    <div class="ov-emoji">🎵</div>
+    <div class="ov-title">ຈັງຫວະ</div>
+    <div class="ov-sub">ແຕະເມື່ອໂນ໊ດລົງມາຮອດເສັ້ນ — ຕາມຈັງຫວະ!</div>
+    <div style="font-size:0.8rem;color:var(--text2);margin-bottom:8px">ຄວາມໄວ:</div>
+    <div class="speed-select">
+      <button class="speed-btn" data-speed="slow" onclick="selectSpeed('slow')">🐢 ຊ້າ</button>
+      <button class="speed-btn active" data-speed="normal" onclick="selectSpeed('normal')">🏃 ປົກກະຕິ</button>
+      <button class="speed-btn" data-speed="fast" onclick="selectSpeed('fast')">🚀 ໄວ</button>
+    </div>
+    <div class="btn-group"><button class="btn btn-primary" onclick="startGame()">🎮 ເລີ່ມຫຼິ້ນ</button></div>
+  </div>
+
+  <div class="overlay hidden" id="overScreen">
+    <div class="ov-emoji" id="overEmoji">🎵</div>
+    <div class="ov-title" id="overTitle">ຈົບເກມ</div>
+    <div class="new-record hidden" id="nrBadge">🏆 ສະຖິຕິໃໝ່!</div>
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-value" id="fScore">0</div><div class="stat-label">ຄະແນນ</div></div>
+      <div class="stat-item"><div class="stat-value best" id="fBest">0</div><div class="stat-label">ດີທີ່ສຸດ</div></div>
+      <div class="stat-item"><div class="stat-value" id="fCombo">0</div><div class="stat-label">ຄອມໂບສູງສຸດ</div></div>
+      <div class="stat-item"><div class="stat-value" id="fPerfect">0</div><div class="stat-label">ສົມບູນ</div></div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startGame()">🔄 ລອງໃໝ່</button>
+      <button class="btn btn-secondary" onclick="showStart()">🏠 ໜ້າຫຼັກ</button>
+    </div>
+  </div>
+
+  <div id="gameUI" style="display:none;flex-direction:column;height:100vh;height:100dvh">
+    <div class="game-header">
+      <div class="game-title"><span>🎵</span><span>ຈັງຫວະ</span></div>
+      <div class="scores">
+        <div class="score-box"><div class="score-lbl">ຄະແນນ</div><div class="score-val" id="scoreD">0</div></div>
+        <div class="score-box"><div class="score-lbl">ຄອມໂບ</div><div class="score-val" id="comboD">0</div></div>
+      </div>
+    </div>
+    <div class="lanes-area" id="lanesArea">
+      <div class="lane" id="lane0"></div>
+      <div class="lane" id="lane1"></div>
+      <div class="lane" id="lane2"></div>
+      <div class="lane" id="lane3"></div>
+      <div class="hit-feedback" id="hitFb"></div>
+      <div class="combo-area"><div class="combo-text" id="comboText"></div></div>
+    </div>
+    <div class="hit-zone">
+      <button class="hit-btn" onclick="hitLane(0)" data-lane="0"></button>
+      <button class="hit-btn" onclick="hitLane(1)" data-lane="1"></button>
+      <button class="hit-btn" onclick="hitLane(2)" data-lane="2"></button>
+      <button class="hit-btn" onclick="hitLane(3)" data-lane="3"></button>
+    </div>
+  </div>
+
+  <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+  <script>
+    const GID='rhythm-tap',LANES=4;
+    const LANE_COLORS=['#EF4444','#3B82F6','#10B981','#F59E0B'];
+    const SPEED_MAP={slow:{noteSpeed:2.5,spawnRate:900},normal:{noteSpeed:4,spawnRate:600},fast:{noteSpeed:6,spawnRate:400}};
+
+    let speed='normal',noteSpeed=4,spawnRate=600;
+    let notes=[],score=0,combo=0,bestCombo=0,perfects=0,misses=0;
+    let gameOn=false,noteIdCounter=0,lastSpawn=0,maxMisses=5;
+
+    function sv(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+    function ld(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+    function getHS(){return ld('hs',0)}function updHS(s){const b=getHS();if(s>b){sv('hs',s);return true}return false}
+
+    let aC=null,snd=true;
+    function initA(){if(!aC)aC=new(window.AudioContext||window.webkitAudioContext)();if(aC.state==='suspended')aC.resume()}
+    function tone(f,d,t='sine',v=0.12){if(!snd||!aC)return;try{const o=aC.createOscillator(),g=aC.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,aC.currentTime+d/1000);o.connect(g);g.connect(aC.destination);o.start();o.stop(aC.currentTime+d/1000)}catch(e){}}
+    function toggleSound(){snd=!snd;document.getElementById('soundBtn').textContent=snd?'🔊':'🔇'}
+    function vib(p){if(navigator.vibrate)navigator.vibrate(p)}
+
+    function selectSpeed(s){
+      speed=s;
+      document.querySelectorAll('.speed-btn').forEach(b=>b.classList.toggle('active',b.dataset.speed===s));
+    }
+
+    function spawnNote(){
+      const lane=Math.floor(Math.random()*LANES);
+      const note={id:noteIdCounter++,lane,y:-40,hit:false};
+      notes.push(note);
+
+      const el=document.createElement('div');
+      el.className='note';el.id='note-'+note.id;
+      el.style.background=LANE_COLORS[lane];
+      el.style.top='-40px';
+      el.style.boxShadow=`0 0 15px ${LANE_COLORS[lane]}40`;
+      document.getElementById('lane'+lane).appendChild(el);
+    }
+
+    function hitLane(lane){
+      if(!gameOn)return;
+      const area=document.getElementById('lanesArea');
+      const areaH=area.getBoundingClientRect().height;
+      const hitY=areaH-80;
+
+      // Find closest note in this lane
+      let closest=null,closestDist=Infinity;
+      notes.forEach(n=>{
+        if(n.lane!==lane||n.hit)return;
+        const dist=Math.abs(n.y-(hitY-20));
+        if(dist<closestDist){closestDist=dist;closest=n}
+      });
+
+      if(!closest||closestDist>60){
+        // Miss - tapped empty
+        return;
+      }
+
+      closest.hit=true;
+      const el=document.getElementById('note-'+closest.id);
+      if(el)el.remove();
+
+      let rating,pts,color;
+      if(closestDist<15){rating='ສົມບູນ';pts=10;color=var_success;perfects++;tone(880,50)}
+      else if(closestDist<30){rating='ດີ';pts=5;color=var_warning;tone(660,40)}
+      else{rating='ໄດ້';pts=2;color=var_text2;tone(440,30)}
+
+      combo++;if(combo>bestCombo)bestCombo=combo;
+      const mul=1+Math.floor(combo/10)*0.5;
+      score+=Math.floor(pts*mul);
+      vib(15);
+
+      document.getElementById('scoreD').textContent=score;
+      document.getElementById('comboD').textContent=combo;
+
+      // Hit feedback
+      const fb=document.getElementById('hitFb');
+      fb.innerHTML=`<span style="color:${color}">${rating}</span>`;
+
+      // Combo popup
+      if(combo>0&&combo%10===0){
+        const ct=document.getElementById('comboText');
+        ct.textContent=`🔥 x${combo}`;ct.style.color=var_warning;
+        ct.classList.remove('show');void ct.offsetWidth;ct.classList.add('show');
+      }
+    }
+
+    const var_success='#10B981',var_warning='#F59E0B',var_text2='#a0a0b8';
+
+    function gameLoop(now){
+      if(!gameOn)return;
+
+      const area=document.getElementById('lanesArea');
+      const areaH=area.getBoundingClientRect().height;
+
+      // Spawn
+      if(now-lastSpawn>spawnRate){
+        spawnNote();
+        lastSpawn=now;
+        // Gradually speed up
+        if(spawnRate>300)spawnRate-=0.5;
+      }
+
+      // Move notes
+      for(let i=notes.length-1;i>=0;i--){
+        const n=notes[i];
+        if(n.hit)continue;
+        n.y+=noteSpeed;
+
+        const el=document.getElementById('note-'+n.id);
+        if(el)el.style.top=n.y+'px';
+
+        // Missed
+        if(n.y>areaH){
+          if(el)el.remove();
+          notes.splice(i,1);
+          combo=0;misses++;
+          document.getElementById('comboD').textContent='0';
+          const fb=document.getElementById('hitFb');
+          fb.innerHTML=`<span style="color:#EF4444">ພາດ!</span>`;
+          tone(200,80,'square',0.08);
+
+          if(misses>=maxMisses){
+            gameOver();return;
+          }
+        }
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(){
+      gameOn=false;
+      tone(200,300,'sawtooth',0.12);vib([100,30,100]);
+      const isNew=updHS(score);
+      document.getElementById('fScore').textContent=score;
+      document.getElementById('fBest').textContent=getHS();
+      document.getElementById('fCombo').textContent=bestCombo;
+      document.getElementById('fPerfect').textContent=perfects;
+      const b=document.getElementById('nrBadge'),e=document.getElementById('overEmoji');
+      if(isNew&&score>0){b.classList.remove('hidden');e.textContent='🏆';document.getElementById('overTitle').textContent='ສະຖິຕິໃໝ່!'}
+      else{b.classList.add('hidden');e.textContent='🎵';document.getElementById('overTitle').textContent='ຈົບເກມ'}
+      setTimeout(()=>document.getElementById('overScreen').classList.remove('hidden'),300);
+    }
+
+    function startGame(){
+      initA();
+      const cfg=SPEED_MAP[speed];
+      noteSpeed=cfg.noteSpeed;spawnRate=cfg.spawnRate;
+      score=0;combo=0;bestCombo=0;perfects=0;misses=0;notes=[];noteIdCounter=0;gameOn=true;lastSpawn=0;
+
+      // Clear lanes
+      for(let i=0;i<LANES;i++)document.getElementById('lane'+i).innerHTML='';
+      document.getElementById('hitFb').innerHTML='';
+      document.getElementById('comboText').className='combo-text';
+
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('overScreen').classList.add('hidden');
+      document.getElementById('gameUI').style.display='flex';
+      document.getElementById('scoreD').textContent='0';
+      document.getElementById('comboD').textContent='0';
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    function showStart(){
+      document.getElementById('startScreen').classList.remove('hidden');
+      document.getElementById('overScreen').classList.add('hidden');
+      document.getElementById('gameUI').style.display='none';
+      gameOn=false;
+    }
+
+    // Touch support for hit zones
+    document.querySelector('.hit-zone').addEventListener('touchstart',e=>{
+      e.preventDefault();
+      const touch=e.touches[0];
+      const btn=document.elementFromPoint(touch.clientX,touch.clientY);
+      if(btn&&btn.dataset.lane!==undefined)hitLane(+btn.dataset.lane);
+    },{passive:false});
+  </script>
+</body>
+</html>

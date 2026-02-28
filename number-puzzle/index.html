@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ເກມຕົວເລກ — Number Puzzle</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { font-size: 16px; -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg-primary: #0f0f1a;
+      --bg-glass: rgba(255,255,255,0.08);
+      --border-glass: rgba(255,255,255,0.12);
+      --text-primary: #f0f0f5;
+      --text-secondary: #a0a0b8;
+      --accent-gradient: linear-gradient(135deg, #7C3AED 0%, #2563EB 100%);
+      --accent-glow: rgba(124,58,237,0.3);
+      --success: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --font-family: 'Noto Sans Lao', 'Phetsarath OT', 'Saysettha OT', system-ui, sans-serif;
+      --correct: #10B981;
+      --present: #F59E0B;
+      --absent: #374151;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh; height: 100dvh;
+      overflow: hidden; overscroll-behavior: none;
+      -webkit-font-smoothing: antialiased;
+      user-select: none; -webkit-user-select: none;
+      display: flex; flex-direction: column;
+    }
+
+    .bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+    .bg::before {
+      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(ellipse at 30% 20%, rgba(124,58,237,0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse at 70% 80%, rgba(37,99,235,0.06) 0%, transparent 50%);
+    }
+
+    /* Overlay */
+    .overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(15,15,26,0.92);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 32px 20px; opacity: 1; transition: opacity 0.4s;
+    }
+    .overlay.hidden { opacity: 0; pointer-events: none; }
+    .ov-emoji { font-size: 3.5rem; margin-bottom: 12px; animation: bounceIn 0.5s ease; }
+    @keyframes bounceIn { 0%{transform:scale(0)} 50%{transform:scale(1.2)} 100%{transform:scale(1)} }
+    .ov-title { font-size: 2.2rem; font-weight: 800; text-align: center; margin-bottom: 6px; }
+    .ov-sub { font-size: 0.95rem; color: var(--text-secondary); text-align: center; margin-bottom: 28px; max-width: 300px; line-height: 1.6; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 14px 36px; border: none; border-radius: 999px;
+      font-family: var(--font-family); font-size: 1.1rem; font-weight: 600;
+      cursor: pointer; transition: all 0.25s; touch-action: manipulation; min-width: 200px;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background: var(--accent-gradient); color: white; box-shadow: 0 0 20px var(--accent-glow); }
+    .btn-secondary { background: var(--bg-glass); color: var(--text-primary); border: 1px solid var(--border-glass); }
+    .btn-sm { padding: 10px 20px; font-size: 0.9rem; min-width: 0; }
+    .btn-group { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 260px; align-items: center; }
+
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 8px; width: 100%; max-width: 320px; margin-bottom: 20px;
+    }
+    .stat-item { text-align: center; padding: 10px 4px; background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: 10px; }
+    .stat-value { font-size: 1.4rem; font-weight: 700; }
+    .stat-value.best { background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .stat-label { font-size: 0.6rem; color: var(--text-secondary); margin-top: 2px; }
+
+    .new-record { display: inline-flex; gap: 6px; padding: 4px 14px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; background: rgba(16,185,129,0.15); color: var(--success); margin-bottom: 16px; }
+    .new-record.hidden { display: none; }
+
+    /* Legend */
+    .legend { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; width: 100%; max-width: 280px; }
+    .legend-row { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+    .legend-box { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+    .legend-box.correct { background: var(--correct); color: white; }
+    .legend-box.present { background: var(--present); color: white; }
+    .legend-box.absent { background: var(--absent); color: #9CA3AF; }
+
+    /* === GAME UI === */
+    .game-container {
+      display: none; flex-direction: column;
+      height: 100vh; height: 100dvh;
+    }
+
+    .game-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; z-index: 10;
+    }
+    @supports (padding: env(safe-area-inset-top)) {
+      .game-header { padding-top: calc(10px + env(safe-area-inset-top)); }
+    }
+    .game-title { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .header-info { display: flex; gap: 12px; align-items: center; }
+    .header-badge { padding: 4px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; background: rgba(245,158,11,0.15); color: var(--warning); }
+
+    /* Guess grid */
+    .grid-area {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 8px 16px; gap: 6px;
+    }
+
+    .guess-row {
+      display: flex; gap: 6px;
+    }
+
+    .guess-cell {
+      width: 56px; height: 56px;
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 700;
+      transition: all 0.3s;
+      background: transparent;
+    }
+    .guess-cell.filled {
+      border-color: rgba(255,255,255,0.4);
+      animation: cellPop 0.1s ease;
+    }
+    @keyframes cellPop { 0%{transform:scale(1)} 50%{transform:scale(1.1)} 100%{transform:scale(1)} }
+
+    .guess-cell.correct {
+      background: var(--correct); border-color: var(--correct); color: white;
+      animation: flipIn 0.4s ease;
+    }
+    .guess-cell.present {
+      background: var(--present); border-color: var(--present); color: white;
+      animation: flipIn 0.4s ease;
+    }
+    .guess-cell.absent {
+      background: var(--absent); border-color: var(--absent); color: #9CA3AF;
+      animation: flipIn 0.4s ease;
+    }
+    @keyframes flipIn {
+      0% { transform: scaleY(0); }
+      50% { transform: scaleY(0); }
+      100% { transform: scaleY(1); }
+    }
+
+    .guess-cell.current-row {
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    /* Numpad */
+    .numpad {
+      padding: 8px 12px 16px;
+      display: flex; flex-direction: column; gap: 6px;
+      align-items: center;
+    }
+    @supports (padding: env(safe-area-inset-bottom)) {
+      .numpad { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+    }
+    .numpad-row { display: flex; gap: 5px; }
+
+    .numpad-key {
+      width: 36px; height: 48px; border: none; border-radius: 8px;
+      background: rgba(255,255,255,0.12); color: var(--text-primary);
+      font-family: var(--font-family); font-size: 1.2rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s; touch-action: manipulation;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .numpad-key:active { background: rgba(255,255,255,0.25); transform: scale(0.95); }
+    .numpad-key.wide { width: 56px; font-size: 0.8rem; }
+    .numpad-key.submit { background: var(--correct); color: white; }
+    .numpad-key.delete { background: rgba(239,68,68,0.2); color: var(--danger); }
+
+    .numpad-key.key-correct { background: var(--correct); color: white; }
+    .numpad-key.key-present { background: var(--present); color: white; }
+    .numpad-key.key-absent { background: var(--absent); color: #6B7280; }
+
+    /* Message toast */
+    .toast {
+      position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+      padding: 10px 20px; border-radius: 10px;
+      background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);
+      font-size: 0.9rem; font-weight: 600; z-index: 50;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .toast.show { opacity: 1; }
+
+    /* Share result */
+    .share-text {
+      font-size: 0.8rem; color: var(--text-secondary); text-align: center;
+      margin-top: 8px; max-width: 280px; word-break: break-all;
+      background: var(--bg-glass); padding: 10px; border-radius: 8px;
+      font-family: monospace; line-height: 1.6;
+    }
+
+    .sound-btn {
+      position: fixed; top: 12px; right: 12px; z-index: 200;
+      width: 40px; height: 40px; padding: 0; border-radius: 50%;
+      font-size: 1.1rem; background: var(--bg-glass); color: var(--text-primary);
+      border: 1px solid var(--border-glass); cursor: pointer; touch-action: manipulation;
+    }
+    @supports (padding: env(safe-area-inset-top)) {
+      .sound-btn { top: calc(12px + env(safe-area-inset-top)); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg"></div>
+
+  <!-- START SCREEN -->
+  <div class="overlay" id="startScreen">
+    <div class="ov-emoji">🔢</div>
+    <div class="ov-title">ເກມຕົວເລກ</div>
+    <div class="ov-sub">ທາຍເລກ 4 ຫຼັກ ພາຍໃນ 6 ຄັ້ງ<br>ມີປິດສະໜາໃໝ່ທຸກມື້!</div>
+
+    <div class="legend">
+      <div class="legend-row">
+        <div class="legend-box correct">3</div>
+        <span>ຖືກຕ້ອງ ແລະ ຖືກບ່ອນ</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-box present">7</div>
+        <span>ມີຢູ່ ແຕ່ຜິດບ່ອນ</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-box absent">1</div>
+        <span>ບໍ່ມີໃນຄຳຕອບ</span>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startGame('daily')">📅 ປະຈຳວັນ</button>
+      <button class="btn btn-secondary" onclick="startGame('practice')">🎯 ຝຶກຊ້ອມ</button>
+    </div>
+
+    <div style="margin-top: 20px; text-align: center;">
+      <div style="font-size: 0.7rem; color: var(--text-secondary);">🔥 ຕິດຕໍ່ກັນ</div>
+      <div style="font-size: 1.2rem; font-weight: 700; color: var(--warning);" id="startStreak">0</div>
+    </div>
+  </div>
+
+  <!-- GAME OVER SCREEN -->
+  <div class="overlay hidden" id="resultScreen">
+    <div class="ov-emoji" id="resultEmoji">🎉</div>
+    <div class="ov-title" id="resultTitle">ຊະນະ!</div>
+    <div class="ov-sub" id="resultSub"></div>
+    <div class="new-record hidden" id="newRecordBadge">🏆 ສະຖິຕິໃໝ່!</div>
+
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-value" id="statPlayed">0</div>
+        <div class="stat-label">ຫຼິ້ນແລ້ວ</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="statWinPct">0</div>
+        <div class="stat-label">% ຊະນະ</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="statStreak">0</div>
+        <div class="stat-label">ຕິດຕໍ່ກັນ</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value best" id="statMaxStreak">0</div>
+        <div class="stat-label">ສູງສຸດ</div>
+      </div>
+    </div>
+
+    <div class="share-text" id="shareText"></div>
+
+    <div class="btn-group" style="margin-top: 16px;">
+      <button class="btn btn-primary btn-sm" onclick="copyShare()">📋 ແບ່ງປັນ</button>
+      <button class="btn btn-secondary btn-sm" id="practiceBtn" onclick="startGame('practice')">🎯 ຝຶກຊ້ອມ</button>
+      <button class="btn btn-secondary btn-sm" onclick="showStart()">🏠 ໜ້າຫຼັກ</button>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div class="game-container" id="gameContainer">
+    <div class="game-header">
+      <div class="game-title"><span>🔢</span><span>ເກມຕົວເລກ</span></div>
+      <div class="header-info">
+        <div class="header-badge" id="modeLabel">📅 ປະຈຳວັນ</div>
+      </div>
+    </div>
+
+    <div class="grid-area" id="gridArea"></div>
+
+    <div class="numpad" id="numpad"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+  <script>
+    const GAME_ID = 'number-puzzle';
+    const DIGITS = 4;
+    const MAX_GUESSES = 6;
+
+    let mode = 'daily';
+    let targetNumber = '';
+    let guesses = [];
+    let currentGuess = '';
+    let gameActive = false;
+    let gameWon = false;
+    let keyStates = {};
+
+    // Audio
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    // Storage
+    function save(k, v) { try { localStorage.setItem(`game_${GAME_ID}_${k}`, JSON.stringify(v)); } catch(e) {} }
+    function load(k, d = null) { try { const r = localStorage.getItem(`game_${GAME_ID}_${k}`); return r !== null ? JSON.parse(r) : d; } catch(e) { return d; } }
+
+    // Daily seed
+    function getTodayKey() { return new Date().toISOString().slice(0, 10); }
+    function dateToSeed(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) { h = ((h << 5) - h) + str.charCodeAt(i); h |= 0; }
+      return Math.abs(h);
+    }
+    function seededRandom(seed) {
+      let s = seed;
+      return function() { s = (s * 1664525 + 1013904223) & 0xFFFFFFFF; return (s >>> 0) / 0xFFFFFFFF; };
+    }
+
+    function generateTarget(mode) {
+      if (mode === 'daily') {
+        const seed = dateToSeed(getTodayKey());
+        const rng = seededRandom(seed);
+        let num = '';
+        const digits = [0,1,2,3,4,5,6,7,8,9];
+        // Shuffle
+        for (let i = digits.length - 1; i > 0; i--) {
+          const j = Math.floor(rng() * (i + 1));
+          [digits[i], digits[j]] = [digits[j], digits[i]];
+        }
+        // First digit can't be 0
+        if (digits[0] === 0) {
+          const swapIdx = digits.findIndex(d => d !== 0);
+          [digits[0], digits[swapIdx]] = [digits[swapIdx], digits[0]];
+        }
+        return digits.slice(0, DIGITS).join('');
+      } else {
+        // Practice: random
+        const rng = () => Math.random();
+        let digits = [0,1,2,3,4,5,6,7,8,9];
+        for (let i = digits.length - 1; i > 0; i--) {
+          const j = Math.floor(rng() * (i + 1));
+          [digits[i], digits[j]] = [digits[j], digits[i]];
+        }
+        if (digits[0] === 0) {
+          const swapIdx = digits.findIndex(d => d !== 0);
+          [digits[0], digits[swapIdx]] = [digits[swapIdx], digits[0]];
+        }
+        return digits.slice(0, DIGITS).join('');
+      }
+    }
+
+    // Check if already played daily
+    function dailyPlayed() {
+      return load('lastDailyDate', '') === getTodayKey();
+    }
+
+    // Audio
+    function initAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    function playTone(f, d, t = 'sine', v = 0.15) {
+      if (!soundEnabled || !audioCtx) return;
+      try {
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = t; o.frequency.value = f; g.gain.value = v;
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d / 1000);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(); o.stop(audioCtx.currentTime + d / 1000);
+      } catch(e) {}
+    }
+    function playType() { playTone(500, 40, 'square', 0.1); }
+    function playSubmit() { playTone(440, 60, 'sine', 0.12); }
+    function playWin() { [523,659,784,1047].forEach((f,i) => setTimeout(() => playTone(f, 120, 'sine', 0.2), i * 100)); }
+    function playLose() { playTone(200, 400, 'sawtooth', 0.12); }
+    function toggleSound() { soundEnabled = !soundEnabled; document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇'; }
+    function vibrate(p) { if (navigator.vibrate) navigator.vibrate(p); }
+
+    // Build grid
+    function buildGrid() {
+      const grid = document.getElementById('gridArea');
+      grid.innerHTML = '';
+      for (let r = 0; r < MAX_GUESSES; r++) {
+        const row = document.createElement('div');
+        row.className = 'guess-row';
+        row.id = `row-${r}`;
+        for (let c = 0; c < DIGITS; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'guess-cell';
+          cell.id = `cell-${r}-${c}`;
+          row.appendChild(cell);
+        }
+        grid.appendChild(row);
+      }
+      highlightCurrentRow();
+    }
+
+    // Build numpad
+    function buildNumpad() {
+      const pad = document.getElementById('numpad');
+      pad.innerHTML = '';
+      // Row 1: 1-5
+      const r1 = document.createElement('div'); r1.className = 'numpad-row';
+      for (let i = 1; i <= 5; i++) {
+        r1.appendChild(makeKey(String(i), String(i)));
+      }
+      pad.appendChild(r1);
+
+      // Row 2: 6-0
+      const r2 = document.createElement('div'); r2.className = 'numpad-row';
+      for (let i = 6; i <= 9; i++) {
+        r2.appendChild(makeKey(String(i), String(i)));
+      }
+      r2.appendChild(makeKey('0', '0'));
+      pad.appendChild(r2);
+
+      // Row 3: delete, submit
+      const r3 = document.createElement('div'); r3.className = 'numpad-row';
+      const delBtn = makeKey('⌫', 'delete');
+      delBtn.classList.add('wide', 'delete');
+      r3.appendChild(delBtn);
+
+      const subBtn = makeKey('ສົ່ງ', 'submit');
+      subBtn.classList.add('wide', 'submit');
+      r3.appendChild(subBtn);
+      pad.appendChild(r3);
+    }
+
+    function makeKey(label, value) {
+      const btn = document.createElement('button');
+      btn.className = 'numpad-key';
+      btn.textContent = label;
+      btn.dataset.value = value;
+      btn.id = `key-${value}`;
+      btn.addEventListener('click', () => handleKey(value));
+      return btn;
+    }
+
+    // Highlight current row
+    function highlightCurrentRow() {
+      document.querySelectorAll('.guess-cell').forEach(c => c.classList.remove('current-row'));
+      const row = guesses.length;
+      if (row < MAX_GUESSES) {
+        for (let c = 0; c < DIGITS; c++) {
+          document.getElementById(`cell-${row}-${c}`).classList.add('current-row');
+        }
+      }
+    }
+
+    // Handle key input
+    function handleKey(value) {
+      if (!gameActive) return;
+
+      if (value === 'delete') {
+        if (currentGuess.length > 0) {
+          currentGuess = currentGuess.slice(0, -1);
+          updateCurrentRow();
+          playType();
+        }
+      } else if (value === 'submit') {
+        submitGuess();
+      } else {
+        if (currentGuess.length < DIGITS) {
+          currentGuess += value;
+          updateCurrentRow();
+          playType();
+          vibrate(15);
+        }
+      }
+    }
+
+    function updateCurrentRow() {
+      const row = guesses.length;
+      for (let c = 0; c < DIGITS; c++) {
+        const cell = document.getElementById(`cell-${row}-${c}`);
+        cell.textContent = currentGuess[c] || '';
+        cell.classList.toggle('filled', !!currentGuess[c]);
+      }
+    }
+
+    function submitGuess() {
+      if (currentGuess.length !== DIGITS) {
+        showToast('ກະລຸນາໃສ່ ' + DIGITS + ' ຫຼັກ');
+        vibrate(50);
+        return;
+      }
+
+      // Check for duplicate digits
+      const unique = new Set(currentGuess.split(''));
+      if (unique.size !== DIGITS) {
+        showToast('ຕົວເລກຊ້ຳ! ໃຊ້ຕົວເລກບໍ່ຊ້ຳ');
+        vibrate(50);
+        return;
+      }
+
+      playSubmit();
+
+      const row = guesses.length;
+      const result = checkGuess(currentGuess);
+      guesses.push({ guess: currentGuess, result });
+
+      // Animate cells
+      for (let c = 0; c < DIGITS; c++) {
+        const cell = document.getElementById(`cell-${row}-${c}`);
+        setTimeout(() => {
+          cell.classList.add(result[c]);
+          updateKeyState(currentGuess[c], result[c]);
+        }, c * 150);
+      }
+
+      // Check win/lose after animation
+      setTimeout(() => {
+        if (result.every(r => r === 'correct')) {
+          gameWon = true;
+          gameActive = false;
+          playWin();
+          vibrate([50, 50, 50, 50, 100]);
+          saveResult(true);
+          setTimeout(() => showResult(), 500);
+        } else if (guesses.length >= MAX_GUESSES) {
+          gameActive = false;
+          playLose();
+          vibrate([100, 50, 100]);
+          saveResult(false);
+          setTimeout(() => showResult(), 500);
+        } else {
+          currentGuess = '';
+          highlightCurrentRow();
+        }
+      }, DIGITS * 150 + 200);
+
+      currentGuess = '';
+    }
+
+    function checkGuess(guess) {
+      const result = Array(DIGITS).fill('absent');
+      const targetArr = targetNumber.split('');
+      const guessArr = guess.split('');
+
+      // First pass: correct positions
+      for (let i = 0; i < DIGITS; i++) {
+        if (guessArr[i] === targetArr[i]) {
+          result[i] = 'correct';
+          targetArr[i] = null;
+          guessArr[i] = null;
+        }
+      }
+
+      // Second pass: present but wrong position
+      for (let i = 0; i < DIGITS; i++) {
+        if (guessArr[i] === null) continue;
+        const idx = targetArr.indexOf(guessArr[i]);
+        if (idx !== -1) {
+          result[i] = 'present';
+          targetArr[idx] = null;
+        }
+      }
+
+      return result;
+    }
+
+    function updateKeyState(digit, state) {
+      const priority = { 'correct': 3, 'present': 2, 'absent': 1 };
+      const current = keyStates[digit] || '';
+      if (priority[state] > (priority[current] || 0)) {
+        keyStates[digit] = state;
+        const key = document.getElementById(`key-${digit}`);
+        if (key) {
+          key.className = 'numpad-key';
+          key.classList.add(`key-${state}`);
+        }
+      }
+    }
+
+    // Stats
+    function saveResult(won) {
+      let stats = load('stats', { played: 0, wins: 0, streak: 0, maxStreak: 0, dist: [0,0,0,0,0,0] });
+      stats.played++;
+      if (won) {
+        stats.wins++;
+        stats.streak++;
+        stats.dist[guesses.length - 1]++;
+      } else {
+        stats.streak = 0;
+      }
+      if (stats.streak > stats.maxStreak) stats.maxStreak = stats.streak;
+      save('stats', stats);
+
+      if (mode === 'daily') {
+        save('lastDailyDate', getTodayKey());
+        save('lastDailyResult', { guesses, won, target: targetNumber });
+      }
+    }
+
+    function showResult() {
+      const stats = load('stats', { played: 0, wins: 0, streak: 0, maxStreak: 0, dist: [0,0,0,0,0,0] });
+
+      document.getElementById('statPlayed').textContent = stats.played;
+      document.getElementById('statWinPct').textContent = stats.played > 0 ? Math.round((stats.wins / stats.played) * 100) : 0;
+      document.getElementById('statStreak').textContent = stats.streak;
+      document.getElementById('statMaxStreak').textContent = stats.maxStreak;
+
+      if (gameWon) {
+        document.getElementById('resultEmoji').textContent = '🎉';
+        document.getElementById('resultTitle').textContent = 'ຊະນະ!';
+        document.getElementById('resultSub').textContent = `ທາຍຖືກໃນ ${guesses.length}/${MAX_GUESSES} ຄັ້ງ`;
+      } else {
+        document.getElementById('resultEmoji').textContent = '😔';
+        document.getElementById('resultTitle').textContent = 'ເສຍດາຍ!';
+        document.getElementById('resultSub').textContent = `ຄຳຕອບແມ່ນ: ${targetNumber}`;
+      }
+
+      // Generate share text
+      const emojiMap = { correct: '🟩', present: '🟨', absent: '⬛' };
+      let shareLines = [`ເກມຕົວເລກ ${mode === 'daily' ? getTodayKey() : 'ຝຶກຊ້ອມ'} ${gameWon ? guesses.length : 'X'}/${MAX_GUESSES}`, ''];
+      guesses.forEach(g => {
+        shareLines.push(g.result.map(r => emojiMap[r]).join(''));
+      });
+      const shareStr = shareLines.join('\n');
+      document.getElementById('shareText').textContent = shareStr;
+
+      document.getElementById('newRecordBadge').classList.toggle('hidden', !gameWon || guesses.length > 2);
+      document.getElementById('resultScreen').classList.remove('hidden');
+    }
+
+    function copyShare() {
+      const text = document.getElementById('shareText').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('ສຳເນົາແລ້ວ! 📋');
+      }).catch(() => {
+        showToast('ບໍ່ສາມາດສຳເນົາ');
+      });
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    // Game control
+    function startGame(m) {
+      initAudio();
+      mode = m;
+
+      if (mode === 'daily' && dailyPlayed()) {
+        // Show last result
+        const last = load('lastDailyResult', null);
+        if (last) {
+          targetNumber = last.target;
+          guesses = last.guesses;
+          gameWon = last.won;
+          gameActive = false;
+
+          document.getElementById('startScreen').classList.add('hidden');
+          document.getElementById('resultScreen').classList.add('hidden');
+          document.getElementById('gameContainer').style.display = 'flex';
+          document.getElementById('modeLabel').textContent = '📅 ປະຈຳວັນ';
+
+          buildGrid();
+          buildNumpad();
+
+          // Replay
+          last.guesses.forEach((g, r) => {
+            for (let c = 0; c < DIGITS; c++) {
+              const cell = document.getElementById(`cell-${r}-${c}`);
+              cell.textContent = g.guess[c];
+              cell.classList.add(g.result[c]);
+              updateKeyState(g.guess[c], g.result[c]);
+            }
+          });
+
+          setTimeout(() => showResult(), 500);
+          return;
+        }
+      }
+
+      targetNumber = generateTarget(mode);
+      guesses = [];
+      currentGuess = '';
+      gameActive = true;
+      gameWon = false;
+      keyStates = {};
+
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('resultScreen').classList.add('hidden');
+      document.getElementById('gameContainer').style.display = 'flex';
+      document.getElementById('modeLabel').textContent = mode === 'daily' ? '📅 ປະຈຳວັນ' : '🎯 ຝຶກຊ້ອມ';
+
+      buildGrid();
+      buildNumpad();
+    }
+
+    function showStart() {
+      document.getElementById('startScreen').classList.remove('hidden');
+      document.getElementById('resultScreen').classList.add('hidden');
+      document.getElementById('gameContainer').style.display = 'none';
+
+      const stats = load('stats', { played: 0, wins: 0, streak: 0, maxStreak: 0, dist: [0,0,0,0,0,0] });
+      document.getElementById('startStreak').textContent = stats.streak;
+    }
+
+    // Keyboard support (for desktop)
+    document.addEventListener('keydown', (e) => {
+      if (!gameActive) return;
+      if (e.key >= '0' && e.key <= '9') handleKey(e.key);
+      else if (e.key === 'Backspace') handleKey('delete');
+      else if (e.key === 'Enter') handleKey('submit');
+    });
+
+    // Init
+    const initStats = load('stats', { played: 0, wins: 0, streak: 0, maxStreak: 0, dist: [0,0,0,0,0,0] });
+    document.getElementById('startStreak').textContent = initStats.streak;
+  </script>
+</body>
+</html>

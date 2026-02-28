@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ຊອກຫາຄຳ — Word Hunt</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+    :root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10B981;--warning:#F59E0B;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+    .bg{position:fixed;inset:0;z-index:-1;pointer-events:none}
+    .bg::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+
+    .overlay{position:fixed;inset:0;z-index:100;background:rgba(15,15,26,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;opacity:1;transition:opacity 0.4s}
+    .overlay.hidden{opacity:0;pointer-events:none}
+    .ov-emoji{font-size:3.5rem;margin-bottom:12px;animation:bounceIn 0.5s ease}
+    @keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+    .ov-title{font-size:2.2rem;font-weight:800;text-align:center;margin-bottom:6px}
+    .ov-sub{font-size:0.95rem;color:var(--text2);text-align:center;margin-bottom:28px;max-width:300px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 36px;border:none;border-radius:999px;font-family:var(--font);font-size:1.1rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:200px}
+    .btn:active{transform:scale(0.96)}
+    .btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}
+    .btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}
+    .btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px;align-items:center}
+
+    .game-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;z-index:10}
+    @supports(padding:env(safe-area-inset-top)){.game-header{padding-top:calc(10px+env(safe-area-inset-top))}}
+    .game-title{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+    .scores{display:flex;gap:14px}.score-box{text-align:center}.score-lbl{font-size:0.55rem;color:var(--text2)}.score-val{font-size:1rem;font-weight:700}
+    .score-val.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+    .game-area{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px;gap:12px;overflow-y:auto}
+
+    /* Letter grid */
+    .letter-grid{display:grid;gap:4px;touch-action:none}
+    .letter-cell{border-radius:8px;background:rgba(255,255,255,0.06);border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;cursor:pointer;transition:all 0.15s;touch-action:none}
+    .letter-cell.selecting{background:rgba(124,58,237,0.3);border-color:var(--accent)}
+    .letter-cell.found{background:rgba(16,185,129,0.15);border-color:var(--success);color:var(--success)}
+
+    /* Current word */
+    .current-word{font-size:1.3rem;font-weight:700;min-height:2rem;color:var(--accent);letter-spacing:2px}
+
+    /* Found words */
+    .found-section{width:100%;max-width:360px}
+    .found-title{font-size:0.75rem;color:var(--text2);margin-bottom:8px}
+    .found-words{display:flex;flex-wrap:wrap;gap:6px}
+    .found-word{padding:4px 12px;border-radius:999px;font-size:0.8rem;font-weight:600;background:rgba(16,185,129,0.1);color:var(--success);border:1px solid rgba(16,185,129,0.2)}
+
+    /* Stats */
+    .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}
+    .stat-item{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}
+    .stat-value{font-size:1.8rem;font-weight:700}
+    .stat-label{font-size:0.7rem;color:var(--text2);margin-top:4px}
+
+    .sound-btn{position:fixed;top:12px;right:12px;z-index:200;width:40px;height:40px;padding:0;border-radius:50%;font-size:1.1rem;background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass);cursor:pointer;touch-action:manipulation}
+    @supports(padding:env(safe-area-inset-top)){.sound-btn{top:calc(12px+env(safe-area-inset-top))}}
+
+    .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);padding:8px 16px;border-radius:10px;background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);font-size:0.85rem;font-weight:600;z-index:50;opacity:0;pointer-events:none;transition:opacity 0.3s}
+    .toast.show{opacity:1}
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+
+  <div class="overlay" id="startScreen">
+    <div class="ov-emoji">🔤</div>
+    <div class="ov-title">ຊອກຫາຄຳ</div>
+    <div class="ov-sub">ລາກຕົວອັກສອນເພື່ອສ້າງຄຳ — ຊອກຫາໃຫ້ຫຼາຍທີ່ສຸດ!</div>
+    <div class="btn-group"><button class="btn btn-primary" onclick="startGame()">🎮 ເລີ່ມຫຼິ້ນ</button></div>
+  </div>
+
+  <div class="overlay hidden" id="resultScreen">
+    <div class="ov-emoji">🎉</div>
+    <div class="ov-title" id="rTitle">ເກັ່ງຫຼາຍ!</div>
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-value" id="rWords">0</div><div class="stat-label">ຄຳທີ່ພົບ</div></div>
+      <div class="stat-item"><div class="stat-value" id="rScore">0</div><div class="stat-label">ຄະແນນ</div></div>
+      <div class="stat-item"><div class="stat-value" id="rTotal">0</div><div class="stat-label">ຄຳທັງໝົດ</div></div>
+      <div class="stat-item"><div class="stat-value" id="rBest">0</div><div class="stat-label">ດີທີ່ສຸດ</div></div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startGame()">🔄 ຫຼິ້ນອີກ</button>
+      <button class="btn btn-secondary" onclick="showStart()">🏠 ໜ້າຫຼັກ</button>
+    </div>
+  </div>
+
+  <div id="gameUI" style="display:none;flex-direction:column;height:100vh;height:100dvh">
+    <div class="game-header">
+      <div class="game-title"><span>🔤</span><span>ຊອກຫາຄຳ</span></div>
+      <div class="scores">
+        <div class="score-box"><div class="score-lbl">ຄະແນນ</div><div class="score-val" id="scoreD">0</div></div>
+        <div class="score-box"><div class="score-lbl">ຄຳ</div><div class="score-val" id="wordCountD">0/0</div></div>
+      </div>
+    </div>
+    <div class="game-area">
+      <div class="current-word" id="currentWord"></div>
+      <div class="letter-grid" id="letterGrid"></div>
+      <div class="found-section">
+        <div class="found-title">ຄຳທີ່ພົບແລ້ວ:</div>
+        <div class="found-words" id="foundWords"></div>
+      </div>
+      <button class="btn btn-secondary" style="margin-top:12px;padding:10px 24px;font-size:0.9rem;min-width:auto" onclick="finishGame()">✅ ສຳເລັດ</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+  <script>
+    const GID='word-hunt';
+
+    // English word list (common 3-5 letter words for the game)
+    const WORDS=['CAT','CAR','CAN','CUP','CUT','CAB','CAP','COT','COG','COW','DAD','DAM','DAY','DEN','DEW','DIG','DIM','DIP','DOC','DOG','DOT','DRY','DUB','DUG','DUO','EAR','EAT','EGG','ELF','ELM','END','ERA','EVE','EWE','EYE','FAN','FAR','FAT','FED','FEW','FIG','FIN','FIT','FIX','FLY','FOG','FOR','FOX','FRY','FUN','FUR','GAP','GAS','GEL','GEM','GET','GIG','GIN','GNU','GOD','GOT','GUM','GUN','GUT','GUY','GYM','HAD','HAM','HAS','HAT','HAY','HEN','HER','HEW','HID','HIM','HIP','HIS','HIT','HOG','HOP','HOT','HOW','HUB','HUG','HUM','HUT','ICE','ICY','ILL','IMP','INK','INN','ION','IRE','IRK','IVY','JAB','JAG','JAM','JAR','JAW','JAY','JET','JIG','JOB','JOG','JOT','JOY','JUG','JUT','KEG','KEN','KEY','KID','KIN','KIT','LAB','LAD','LAG','LAP','LAW','LAY','LED','LEG','LET','LID','LIE','LIP','LIT','LOG','LOT','LOW','LUG','MAD','MAN','MAP','MAT','MAW','MAX','MAY','MEN','MET','MID','MIX','MOB','MOM','MOP','MUD','MUG','NAB','NAG','NAP','NET','NEW','NIT','NOD','NOR','NOT','NOW','NUB','NUN','NUT','OAK','OAR','OAT','ODD','ODE','OFF','OFT','OIL','OLD','ONE','OPT','ORB','ORE','OUR','OUT','OWE','OWL','OWN','PAD','PAN','PAT','PAW','PAY','PEA','PEG','PEN','PET','PIE','PIG','PIN','PIT','PLY','POD','POP','POT','POW','PRY','PUB','PUG','PUN','PUP','PUS','PUT','RAG','RAM','RAN','RAP','RAT','RAW','RAY','RED','REF','RIB','RID','RIG','RIM','RIP','ROB','ROD','ROT','ROW','RUB','RUG','RUM','RUN','RUT','RYE','SAC','SAD','SAG','SAP','SAT','SAW','SAY','SEA','SET','SEW','SHE','SHY','SIN','SIP','SIS','SIT','SIX','SKI','SKY','SLY','SOB','SOD','SON','SOP','SOT','SOW','SOY','SPA','SPY','STY','SUB','SUM','SUN','SUP','TAB','TAD','TAG','TAN','TAP','TAR','TAT','TAX','TEA','TEN','THE','TIE','TIN','TIP','TOE','TON','TOO','TOP','TOT','TOW','TOY','TUB','TUG','TWO','URN','USE','VAN','VAT','VET','VEX','VIA','VIE','VOW','WAD','WAR','WAS','WAX','WAY','WEB','WED','WET','WHO','WHY','WIG','WIN','WIT','WOE','WOK','WON','WOO','WOW','YAK','YAM','YAP','YAW','YEA','YES','YET','YEW','YIN','YOU','ZAP','ZEN','ZIP','ZIT','ZOO','BACK','BAKE','BALL','BAND','BANK','BARE','BARK','BARN','BASE','BATH','BEAM','BEAN','BEAR','BEAT','BEEF','BEEN','BEER','BELL','BELT','BEND','BEST','BIKE','BIRD','BITE','BLOW','BLUE','BOAT','BODY','BOLD','BOLT','BOMB','BOND','BONE','BOOK','BOOT','BORN','BOSS','BOTH','BOWL','BULK','BULL','BURN','BUSH','BUSY','CAFE','CAGE','CAKE','CALL','CALM','CAME','CAMP','CARD','CARE','CART','CASE','CASH','CAST','CAVE','CHAT','CHIP','CITY','CLAM','CLAP','CLAY','CLIP','CLUB','CLUE','COAL','COAT','CODE','COIN','COLD','COME','COOK','COOL','COPE','COPY','CORD','CORE','CORN','COST','CREW','CROP','CROW','CUBE','CURE','CURL','CUTE','DAMP','DARE','DARK','DART','DATA','DATE','DAWN','DEAD','DEAF','DEAL','DEAR','DEBT','DECK','DEEM','DEEP','DEER','DENY','DESK','DIAL','DICE','DIET','DIRT','DISH','DISK','DOCK','DOES','DOME','DONE','DOOR','DOSE','DOWN','DRAG','DRAW','DREW','DROP','DRUM','DUAL','DUCK','DUDE','DULL','DUMB','DUMP','DUNE','DUSK','DUST','DUTY','EACH','EARN','EASE','EAST','EASY','EDGE','EDIT','ELSE','EPIC','EVEN','EVER','EVIL','EXAM','FACE','FACT','FADE','FAIL','FAIR','FAKE','FALL','FAME','FANG','FARM','FAST','FATE','FEAR','FEAT','FEED','FEEL','FELL','FELT','FILE','FILL','FILM','FIND','FINE','FIRE','FIRM','FISH','FIST','FLAG','FLAW','FLED','FLIP','FLOW','FOAM','FOLD','FOLK','FOND','FONT','FOOD','FOOL','FOOT','FORD','FORK','FORM','FORT','FOUL','FOUR','FREE','FROM','FUEL','FULL','FUND','FURY','FUSE','GAIN','GAME','GANG','GATE','GAVE','GAZE','GEAR','GENE','GIFT','GIRL','GIVE','GLAD','GLOW','GLUE','GOAT','GOES','GOLD','GOLF','GONE','GOOD','GRAB','GRAY','GREW','GREY','GRID','GRIN','GRIP','GROW','GULF','GUST','GUYS','HACK','HAIL','HAIR','HALF','HALL','HALT','HAND','HANG','HARD','HARM','HATE','HAVE','HEAD','HEAL','HEAP','HEAR','HEAT','HEEL','HELD','HELL','HELP','HERB','HERE','HERO','HIGH','HIKE','HILL','HINT','HIRE','HOLD','HOLE','HOME','HOOD','HOOK','HOPE','HORN','HOST','HOUR','HUGE','HUNG','HUNT','HURT','ICON','IDEA','IRON','ITEM','JACK','JAIL','JAZZ','JEAN','JERK','JOKE','JURY','JUST','KEEN','KEEP','KEPT','KEYS','KICK','KILL','KIND','KING','KISS','KNEE','KNEW','KNIT','KNOB','KNOT','KNOW','LACK','LAID','LAKE','LAME','LAMP','LAND','LANE','LAPS','LARK','LAST','LATE','LAWN','LEAD','LEAF','LEAN','LEAP','LEFT','LEND','LENS','LESS','LIAR','LICK','LIEU','LIFE','LIFT','LIKE','LIMB','LIME','LIMP','LINE','LINK','LION','LIST','LIVE','LOAD','LOAN','LOCK','LOFT','LOGO','LONG','LOOK','LORD','LOSE','LOSS','LOST','LOUD','LOVE','LUCK','LUMP','MADE','MAIL','MAIN','MAKE','MALE','MALL','MALT','MANE','MANY','MARK','MASK','MASS','MATE','MAZE','MEAL','MEAN','MEAT','MEET','MELT','MEMO','MENU','MERE','MESH','MESS','MILD','MILE','MILK','MILL','MIND','MINE','MINT','MISS','MODE','MOLE','MONK','MOOD','MOON','MORE','MOSS','MOST','MOTH','MOVE','MUCH','MULE','MUST','MYTH','NAIL','NAME','NAVY','NEAR','NEAT','NECK','NEED','NEST','NEWS','NEXT','NICE','NINE','NODE','NONE','NOON','NORM','NOSE','NOTE','NOUN','NUDE','OATH','OBEY','ODDS','OKAY','ONCE','ONLY','ONTO','OPEN','ORAL','OVEN','OVER','PACE','PACK','PAGE','PAID','PAIN','PAIR','PALE','PALM','PANE','PARK','PART','PASS','PAST','PATH','PEAK','PEEL','PEER','PICK','PILE','PINE','PINK','PIPE','PLAN','PLAY','PLEA','PLOT','PLUG','PLUS','POEM','POET','POKE','POLE','POLL','POND','POOL','POOR','POPE','PORK','PORT','POSE','POST','POUR','PRAY','PREY','PROP','PULL','PUMP','PUNK','PURE','PUSH','QUIT','RACE','RACK','RAGE','RAID','RAIL','RAIN','RANK','RARE','RATE','READ','REAL','REAR','REED','REEF','REEL','REST','RICE','RICH','RIDE','RIFF','RIFT','RING','RIOT','RISE','RISK','ROAD','ROAM','ROBE','ROCK','RODE','ROLE','ROLL','ROOF','ROOM','ROOT','ROPE','ROSE','RUIN','RULE','RUSH','RUST','SACK','SAFE','SAGE','SAID','SAIL','SAKE','SALE','SALT','SAME','SAND','SANE','SANG','SAVE','SEAL','SEAM','SEAT','SEED','SEEK','SEEM','SEEN','SELF','SELL','SEMI','SEND','SENT','SHED','SHIN','SHIP','SHOE','SHOO','SHOP','SHOT','SHOW','SHUT','SICK','SIDE','SIGH','SIGN','SILK','SING','SINK','SITE','SIZE','SKIN','SKIP','SLAM','SLAP','SLEW','SLID','SLIM','SLIP','SLIT','SLOT','SLOW','SLUG','SNAP','SNOW','SOAK','SOAP','SOAR','SOCK','SODA','SOFT','SOIL','SOLD','SOLE','SOME','SONG','SOON','SORE','SORT','SOUL','SOUR','SPAN','SPAR','SPEC','SPED','SPIN','SPIT','SPOT','STAR','STAY','STEM','STEP','STEW','STIR','STOP','STUB','SUCH','SUIT','SULK','SURE','SURF','SWAP','SWIM','TABS','TACK','TAIL','TAKE','TALE','TALK','TALL','TAME','TANK','TAPE','TASK','TAXI','TEAM','TEAR','TELL','TEND','TENT','TERM','TEST','TEXT','THAN','THAT','THEM','THEN','THEY','THIN','THIS','THUS','TICK','TIDE','TIDY','TIED','TIER','TILE','TILL','TILT','TIME','TINY','TIRE','TOAD','TOES','TOLD','TOLL','TOMB','TONE','TOOK','TOOL','TOPS','TORE','TORN','TORT','TOSS','TOUR','TOWN','TRAP','TRAY','TREE','TREK','TRIM','TRIO','TRIP','TRUE','TUBE','TUCK','TUNA','TUNE','TURN','TWIN','TYPE','UGLY','UNDO','UNIT','UNTO','UPON','URGE','USED','USER','VAIN','VALE','VARY','VAST','VEIL','VEIN','VERB','VERY','VEST','VICE','VIEW','VINE','VISA','VOID','VOLT','VOTE','WADE','WAGE','WAIT','WAKE','WALK','WALL','WAND','WANT','WARD','WARM','WARN','WARP','WART','WASH','WAVE','WAVY','WAXY','WEAK','WEAR','WEED','WEEK','WELL','WENT','WERE','WEST','WHAT','WHEN','WHOM','WIDE','WIFE','WILD','WILL','WILT','WIND','WINE','WING','WINK','WIPE','WIRE','WISE','WISH','WITH','WOKE','WOLF','WOOD','WOOL','WORD','WORE','WORK','WORM','WORN','WOVE','WRAP','YARD','YARN','YEAR','YELL','YOUR','ZEAL','ZERO','ZINC','ZONE','ZOOM'];
+
+    const GRID_SIZE=5;
+    let grid=[],wordSet,foundSet,score,hiddenWords;
+
+    function sv(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+    function ld(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+    function getHS(){return ld('hs',0)}function updHS(s){const b=getHS();if(s>b){sv('hs',s);return true}return false}
+
+    let aC=null,snd=true;
+    function initA(){if(!aC)aC=new(window.AudioContext||window.webkitAudioContext)();if(aC.state==='suspended')aC.resume()}
+    function tone(f,d,t='sine',v=0.12){if(!snd||!aC)return;try{const o=aC.createOscillator(),g=aC.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,aC.currentTime+d/1000);o.connect(g);g.connect(aC.destination);o.start();o.stop(aC.currentTime+d/1000)}catch(e){}}
+    function toggleSound(){snd=!snd;document.getElementById('soundBtn').textContent=snd?'🔊':'🔇'}
+    function vib(p){if(navigator.vibrate)navigator.vibrate(p)}
+
+    function showToast(msg){
+      const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+      clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1500);
+    }
+
+    // Generate grid with hidden words
+    function generateGrid(){
+      const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      grid=Array.from({length:GRID_SIZE},()=>Array.from({length:GRID_SIZE},()=>letters[Math.floor(Math.random()*26)]));
+
+      // Find all valid words that can be formed
+      wordSet=new Set();
+      const allWords=new Set(WORDS);
+
+      // Check all paths (up to 5 letters)
+      for(let r=0;r<GRID_SIZE;r++){
+        for(let c=0;c<GRID_SIZE;c++){
+          dfs(r,c,'',new Set(),allWords);
+        }
+      }
+      hiddenWords=wordSet.size;
+    }
+
+    function dfs(r,c,word,visited,allWords){
+      if(r<0||r>=GRID_SIZE||c<0||c>=GRID_SIZE)return;
+      const key=`${r},${c}`;
+      if(visited.has(key))return;
+      word+=grid[r][c];
+      if(word.length>5)return;
+
+      visited.add(key);
+      if(word.length>=3&&allWords.has(word))wordSet.add(word);
+
+      const dirs=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+      for(const[dr,dc]of dirs) dfs(r+dr,c+dc,word,new Set(visited),allWords);
+    }
+
+    // Selection state
+    let selecting=false,selectedCells=[],currentWordStr='';
+
+    function buildGridUI(){
+      const el=document.getElementById('letterGrid');
+      const area=document.querySelector('.game-area');
+      const maxSize=Math.min(area.getBoundingClientRect().width-32,320);
+      const cellSize=Math.floor((maxSize-4*(GRID_SIZE-1))/GRID_SIZE);
+      el.style.gridTemplateColumns=`repeat(${GRID_SIZE},${cellSize}px)`;
+      el.style.gridTemplateRows=`repeat(${GRID_SIZE},${cellSize}px)`;
+      el.innerHTML='';
+
+      for(let r=0;r<GRID_SIZE;r++){
+        for(let c=0;c<GRID_SIZE;c++){
+          const cell=document.createElement('div');
+          cell.className='letter-cell';
+          cell.textContent=grid[r][c];
+          cell.dataset.r=r;cell.dataset.c=c;
+          el.appendChild(cell);
+        }
+      }
+
+      // Touch/mouse events on grid
+      el.addEventListener('mousedown',e=>{startSelect(e);e.preventDefault()});
+      el.addEventListener('mousemove',e=>{continueSelect(e)});
+      el.addEventListener('mouseup',()=>endSelect());
+      el.addEventListener('touchstart',e=>{startSelect(e);e.preventDefault()},{passive:false});
+      el.addEventListener('touchmove',e=>{continueSelect(e);e.preventDefault()},{passive:false});
+      el.addEventListener('touchend',()=>endSelect());
+    }
+
+    function getCellFromEvent(e){
+      const touch=e.touches?e.touches[0]:e;
+      const el=document.elementFromPoint(touch.clientX,touch.clientY);
+      if(el&&el.classList.contains('letter-cell'))return el;
+      return null;
+    }
+
+    function startSelect(e){
+      selecting=true;selectedCells=[];currentWordStr='';
+      const cell=getCellFromEvent(e);
+      if(cell)addCell(cell);
+    }
+
+    function continueSelect(e){
+      if(!selecting)return;
+      const cell=getCellFromEvent(e);
+      if(!cell)return;
+      const key=`${cell.dataset.r},${cell.dataset.c}`;
+      if(selectedCells.some(c=>c.key===key))return;
+      // Must be adjacent to last cell
+      if(selectedCells.length>0){
+        const last=selectedCells[selectedCells.length-1];
+        const dr=Math.abs(+cell.dataset.r-last.r);
+        const dc=Math.abs(+cell.dataset.c-last.c);
+        if(dr>1||dc>1)return;
+      }
+      addCell(cell);
+    }
+
+    function addCell(cell){
+      const r=+cell.dataset.r,c=+cell.dataset.c;
+      selectedCells.push({r,c,key:`${r},${c}`,el:cell});
+      cell.classList.add('selecting');
+      currentWordStr+=grid[r][c];
+      document.getElementById('currentWord').textContent=currentWordStr;
+    }
+
+    function endSelect(){
+      if(!selecting)return;
+      selecting=false;
+
+      // Check if word is valid
+      if(currentWordStr.length>=3&&wordSet.has(currentWordStr)&&!foundSet.has(currentWordStr)){
+        foundSet.add(currentWordStr);
+        const pts=currentWordStr.length<=3?1:currentWordStr.length<=4?3:5;
+        score+=pts;
+        tone(523+foundSet.size*20,60);vib(20);
+
+        // Mark cells as found
+        selectedCells.forEach(c=>c.el.classList.add('found'));
+
+        // Update UI
+        document.getElementById('scoreD').textContent=score;
+        document.getElementById('wordCountD').textContent=`${foundSet.size}/${hiddenWords}`;
+        const fw=document.getElementById('foundWords');
+        const tag=document.createElement('span');
+        tag.className='found-word';tag.textContent=currentWordStr;
+        fw.appendChild(tag);
+
+        if(foundSet.size>=hiddenWords)finishGame();
+      }else if(currentWordStr.length>=3&&foundSet.has(currentWordStr)){
+        showToast('ພົບແລ້ວ!');
+      }
+
+      // Clear selection
+      selectedCells.forEach(c=>c.el.classList.remove('selecting'));
+      selectedCells=[];currentWordStr='';
+      document.getElementById('currentWord').textContent='';
+    }
+
+    function startGame(){
+      initA();score=0;foundSet=new Set();
+      // Regenerate until we have enough words
+      do{generateGrid()}while(hiddenWords<3);
+
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('resultScreen').classList.add('hidden');
+      document.getElementById('gameUI').style.display='flex';
+      document.getElementById('scoreD').textContent='0';
+      document.getElementById('wordCountD').textContent=`0/${hiddenWords}`;
+      document.getElementById('foundWords').innerHTML='';
+      document.getElementById('currentWord').textContent='';
+      buildGridUI();
+    }
+
+    function finishGame(){
+      const isNew=updHS(score);
+      document.getElementById('rWords').textContent=foundSet.size;
+      document.getElementById('rScore').textContent=score;
+      document.getElementById('rTotal').textContent=hiddenWords;
+      document.getElementById('rBest').textContent=getHS();
+      document.getElementById('rTitle').textContent=foundSet.size>=hiddenWords?'ສົມບູນແບບ! 🏆':'ເກັ່ງຫຼາຍ!';
+      document.getElementById('resultScreen').classList.remove('hidden');
+    }
+
+    function showStart(){
+      document.getElementById('startScreen').classList.remove('hidden');
+      document.getElementById('resultScreen').classList.add('hidden');
+      document.getElementById('gameUI').style.display='none';
+    }
+  </script>
+</body>
+</html>
