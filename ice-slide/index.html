@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="lo"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>ປິດສະໜານ້ຳກ້ອນ — Ice Slide</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}:root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif}body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+.bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}.bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}@supports(padding:env(safe-area-inset-top)){.header{padding-top:calc(12px + env(safe-area-inset-top))}}.title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}.back{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.info{display:flex;gap:8px;font-size:0.85rem;font-weight:600}.pill{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:999px;padding:4px 12px}
+.area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px}
+.grid{display:grid;gap:3px;border-radius:12px;overflow:hidden;border:2px solid var(--border-glass);background:var(--border-glass)}.cell{display:flex;align-items:center;justify-content:center;font-size:1.3rem;transition:all 0.15s}
+.swipe-hint{font-size:0.8rem;color:var(--text2);text-align:center}
+.overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s}.ov-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}.ov-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}.btn:active{transform:scale(0.96)}.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+.sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+</style></head><body><div class="bg-dec"></div>
+<div class="overlay" id="startScr"><div class="ov-emoji">❄️</div><div class="ov-title">ປິດສະໜານ້ຳກ້ອນ</div><div class="ov-sub">ເລື່ອນໄປຫາ ⭐ — ເລື່ອນຈົນຊົນ!</div>
+<div class="btn-group"><button class="btn btn-primary" onclick="startGame()">❄️ ເລີ່ມ</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="overlay hidden" id="winScr"><div class="ov-emoji">🎉</div><div class="ov-title">ສຳເລັດ!</div><div class="ov-sub" id="winSub"></div>
+<div class="btn-group"><button class="btn btn-primary" onclick="nextLevel()">▶️ ດ່ານຕໍ່ໄປ</button><button class="btn btn-secondary" onclick="startGame()">🔄 ເລີ່ມໃໝ່</button></div></div>
+<div class="header" id="hdr" style="display:none"><a href="../index.html" class="back">←</a><div class="title"><span>❄️</span><span>ດ່ານ <span id="lvlNum">1</span></span></div><div class="info"><div class="pill" id="moveInfo">0 ຍ້າຍ</div><button class="pill" onclick="resetLevel()" style="cursor:pointer;font-family:var(--font)">↩️</button></div></div>
+<div class="area" id="ga" style="display:none"><div class="grid" id="grid"></div><div class="swipe-hint">👆 ເລື່ອນຂຶ້ນ/ລົງ/ຊ້າຍ/ຂວາ</div></div>
+<button class="sound-btn" id="snd" onclick="sndOn=!sndOn;this.textContent=sndOn?'🔊':'🔇'">🔊</button>
+<script>
+const GID='ice-slide';
+// Levels: 0=ice,1=wall,2=goal,3=player start
+const LEVELS=[
+  {s:5,g:[[0,0,0,0,0],[0,1,0,1,0],[0,0,0,0,0],[0,1,0,0,0],[3,0,0,1,2]]},
+  {s:5,g:[[0,0,1,0,0],[0,0,0,0,0],[1,0,0,1,0],[0,0,1,0,0],[3,0,0,0,2]]},
+  {s:6,g:[[0,0,0,1,0,0],[0,1,0,0,0,0],[0,0,0,1,0,1],[1,0,0,0,0,0],[0,0,1,0,1,0],[3,0,0,0,0,2]]},
+  {s:6,g:[[0,0,0,0,1,0],[0,1,0,0,0,0],[0,0,1,0,0,1],[0,0,0,0,1,0],[1,0,0,1,0,0],[3,0,0,0,0,2]]},
+  {s:7,g:[[0,0,1,0,0,0,0],[0,0,0,0,1,0,0],[0,1,0,0,0,0,1],[0,0,0,1,0,0,0],[1,0,0,0,0,1,0],[0,0,1,0,0,0,0],[3,0,0,0,1,0,2]]},
+  {s:7,g:[[0,1,0,0,0,1,0],[0,0,0,1,0,0,0],[0,0,0,0,0,0,1],[1,0,1,0,0,0,0],[0,0,0,0,1,0,0],[0,1,0,0,0,0,1],[3,0,0,1,0,0,2]]},
+];
+let level=0,grid,playerR,playerC,startR,startC,moves,cellSize,gs,sndOn=true,ac=null,animating=false;
+function save(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function load(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
+function playTone(f,d,t='sine',v=0.2){if(!sndOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+(function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+
+function loadLevel(){
+  const l=LEVELS[level%LEVELS.length];gs=l.s;grid=l.g.map(r=>[...r]);
+  for(let r=0;r<gs;r++)for(let c=0;c<gs;c++)if(grid[r][c]===3){playerR=r;playerC=c;startR=r;startC=c;grid[r][c]=0}
+  moves=0;document.getElementById('lvlNum').textContent=level+1;document.getElementById('moveInfo').textContent='0 ຍ້າຍ'
+}
+function resetLevel(){grid[playerR][playerC]=grid[playerR][playerC];playerR=startR;playerC=startC;moves=0;document.getElementById('moveInfo').textContent='0 ຍ້າຍ';render()}
+function render(){
+  const g=document.getElementById('grid');cellSize=Math.min(Math.floor((Math.min(window.innerWidth,400)-40)/gs),55);
+  g.style.gridTemplateColumns=`repeat(${gs},${cellSize}px)`;g.innerHTML='';
+  for(let r=0;r<gs;r++)for(let c=0;c<gs;c++){
+    const d=document.createElement('div');d.className='cell';d.style.width=cellSize+'px';d.style.height=cellSize+'px';
+    if(grid[r][c]===1){d.style.background='rgba(100,116,139,0.6)';d.textContent='🧱'}
+    else if(grid[r][c]===2){d.style.background='rgba(16,185,129,0.15)';d.textContent='⭐'}
+    else{d.style.background='rgba(56,189,248,0.08)'}
+    if(r===playerR&&c===playerC){d.textContent='🧊';d.style.fontSize='1.5rem'}
+    g.appendChild(d)
+  }
+}
+function slide(dr,dc){
+  if(animating)return;let nr=playerR+dr,nc=playerC+dc;
+  if(nr<0||nr>=gs||nc<0||nc>=gs||grid[nr][nc]===1)return;
+  animating=true;moves++;document.getElementById('moveInfo').textContent=moves+' ຍ້າຍ';
+  // Slide until hit wall or border
+  while(nr>=0&&nr<gs&&nc>=0&&nc<gs&&grid[nr][nc]!==1){
+    playerR=nr;playerC=nc;
+    if(grid[nr][nc]===2){// Win!
+      render();playTone(523,100,'sine',0.3);setTimeout(()=>playTone(659,100,'sine',0.3),100);setTimeout(()=>playTone(784,150,'sine',0.3),200);
+      save('maxLevel',Math.max(level+1,load('maxLevel',0)||0));
+      setTimeout(()=>{document.getElementById('hdr').style.display='none';document.getElementById('ga').style.display='none';
+        document.getElementById('winSub').textContent=`${moves} ການເຄື່ອນ`;document.getElementById('winScr').classList.remove('hidden')},500);
+      animating=false;return
+    }
+    nr+=dr;nc+=dc
+  }
+  playTone(300,40,'square',0.1);if(navigator.vibrate)navigator.vibrate(15);
+  render();animating=false
+}
+// Swipe detection
+let sx,sy;
+document.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+document.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)<20&&Math.abs(dy)<20)return;
+  if(Math.abs(dx)>Math.abs(dy))slide(0,dx>0?1:-1);else slide(dy>0?1:-1,0)
+},{passive:true});
+document.addEventListener('keydown',e=>{if(e.key==='ArrowUp')slide(-1,0);if(e.key==='ArrowDown')slide(1,0);if(e.key==='ArrowLeft')slide(0,-1);if(e.key==='ArrowRight')slide(0,1)});
+function nextLevel(){level++;startGame()}
+function startGame(){
+  document.querySelectorAll('.overlay').forEach(o=>o.classList.add('hidden'));document.getElementById('hdr').style.display='flex';document.getElementById('ga').style.display='flex';
+  loadLevel();render()
+}
+</script></body></html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="lo"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>ດາວນ້ອຍ — Planet Idle</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}:root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif}body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+.bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}.bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}@supports(padding:env(safe-area-inset-top)){.header{padding-top:calc(12px + env(safe-area-inset-top))}}.title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}.back{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.coins-display{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:6px}
+.area{flex:1;display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.planet-wrap{position:relative;width:200px;height:200px;display:flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation}
+.planet{font-size:6rem;animation:float 3s ease-in-out infinite;filter:drop-shadow(0 0 20px rgba(124,58,237,0.3))}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.tap-effect{position:absolute;font-size:1.2rem;font-weight:700;pointer-events:none;color:var(--success);opacity:0}
+.tap-effect.show{animation:tapUp 0.8s ease-out forwards}
+@keyframes tapUp{0%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-60px)}}
+.eps{font-size:0.85rem;color:var(--text2);text-align:center}
+.upgrades{display:flex;flex-direction:column;gap:8px;width:100%;max-width:350px}
+.upg{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px;cursor:pointer;transition:all 0.15s;touch-action:manipulation}
+.upg:active{transform:scale(0.98)}.upg.locked{opacity:0.4;pointer-events:none}
+.upg-icon{font-size:1.8rem;width:40px;text-align:center}
+.upg-info{flex:1}.upg-name{font-size:0.9rem;font-weight:600}.upg-desc{font-size:0.7rem;color:var(--text2)}.upg-lvl{font-size:0.65rem;color:var(--accent)}
+.upg-cost{font-size:0.85rem;font-weight:700;background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;white-space:nowrap}
+.overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s}.ov-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}.ov-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}.btn:active{transform:scale(0.96)}.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+.sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+</style></head><body><div class="bg-dec"></div>
+<div class="overlay" id="startScr"><div class="ov-emoji">🪐</div><div class="ov-title">ດາວນ້ອຍ</div><div class="ov-sub">ແຕະດາວ — ອັບເກດ — ເຕີບໃຫຍ່!</div>
+<div class="btn-group"><button class="btn btn-primary" onclick="init()">🪐 ເລີ່ມ</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="header" id="hdr" style="display:none"><a href="../index.html" class="back">←</a><div class="title"><span>🪐</span><span>ດາວນ້ອຍ</span></div><div class="coins-display">⚡ <span id="coinVal">0</span></div></div>
+<div class="area" id="ga" style="display:none">
+  <div class="planet-wrap" id="planetWrap" onclick="tap()"><div class="planet" id="planet">🌍</div></div>
+  <div class="eps" id="eps">⚡1/ແຕະ · ⚡0/ວິ</div>
+  <div class="upgrades" id="upgrades"></div>
+</div>
+<button class="sound-btn" id="snd" onclick="sndOn=!sndOn;this.textContent=sndOn?'🔊':'🔇'">🔊</button>
+<script>
+const GID='planet-idle';
+const PLANETS=['🌍','🌎','🌏','🪐','⭐','🌟','💫','✨','☀️','🌙'];
+const UPGRADES=[
+  {id:'tap',name:'ພະລັງແຕະ',desc:'ເພີ່ມ⚡ຕໍ່ແຕະ',icon:'👆',baseCost:10,costMul:1.8,effect:1},
+  {id:'auto',name:'ອັດຕະໂນມັດ',desc:'⚡ຕໍ່ວິນາທີ',icon:'⚙️',baseCost:50,costMul:2,effect:1},
+  {id:'multi',name:'ຄູນ',desc:'ຄູນ⚡ທັງໝົດ',icon:'✖️',baseCost:500,costMul:3,effect:0.1},
+  {id:'luck',name:'ໂຊກ',desc:'ໂອກາດ x10',icon:'🍀',baseCost:200,costMul:2.5,effect:1},
+];
+let coins=0,tapPower=1,autoRate=0,multiplier=1,luckChance=0,levels={},sndOn=true,ac=null;
+function save(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function load(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function saveAll(){save('coins',coins);save('levels',levels);save('lastTime',Date.now())}
+function fmt(n){if(n>=1e9)return(n/1e9).toFixed(1)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return Math.floor(n)}
+function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
+function playTone(f,d,t='sine',v=0.2){if(!sndOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+(function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+function calcStats(){
+  tapPower=1+(levels.tap||0);autoRate=(levels.auto||0);multiplier=1+(levels.multi||0)*0.1;luckChance=(levels.luck||0)*0.02;
+  // Planet evolution
+  const total=Object.values(levels).reduce((a,b)=>a+b,0);
+  document.getElementById('planet').textContent=PLANETS[Math.min(Math.floor(total/5),PLANETS.length-1)]
+}
+function tap(){
+  let gain=tapPower*multiplier;
+  if(Math.random()<luckChance)gain*=10;
+  coins+=gain;update();playTone(500+Math.random()*200,30,'sine',0.1);
+  // Visual effect
+  const wrap=document.getElementById('planetWrap');const eff=document.createElement('div');eff.className='tap-effect show';
+  eff.textContent='+'+fmt(gain);eff.style.left='50%';eff.style.top='30%';wrap.appendChild(eff);setTimeout(()=>eff.remove(),800)
+}
+function upgrade(id){
+  const u=UPGRADES.find(u=>u.id===id);const lvl=levels[id]||0;const cost=Math.floor(u.baseCost*Math.pow(u.costMul,lvl));
+  if(coins<cost)return;coins-=cost;levels[id]=(levels[id]||0)+1;calcStats();update();saveAll();
+  playTone(523,60,'sine',0.25);setTimeout(()=>playTone(659,60,'sine',0.25),60);if(navigator.vibrate)navigator.vibrate(20)
+}
+function update(){
+  document.getElementById('coinVal').textContent=fmt(coins);
+  document.getElementById('eps').textContent=`⚡${fmt(tapPower*multiplier)}/ແຕະ · ⚡${fmt(autoRate*multiplier)}/ວິ`;
+  renderUpgrades()
+}
+function renderUpgrades(){
+  const c=document.getElementById('upgrades');c.innerHTML='';
+  UPGRADES.forEach(u=>{const lvl=levels[u.id]||0;const cost=Math.floor(u.baseCost*Math.pow(u.costMul,lvl));
+    const d=document.createElement('div');d.className='upg'+(coins<cost?' locked':'');d.onclick=()=>upgrade(u.id);
+    d.innerHTML=`<div class="upg-icon">${u.icon}</div><div class="upg-info"><div class="upg-name">${u.name}</div><div class="upg-desc">${u.desc}</div><div class="upg-lvl">Lv.${lvl}</div></div><div class="upg-cost">⚡${fmt(cost)}</div>`;
+    c.appendChild(d)})
+}
+function init(){
+  document.getElementById('startScr').classList.add('hidden');document.getElementById('hdr').style.display='flex';document.getElementById('ga').style.display='flex';
+  coins=load('coins',0);levels=load('levels',{})||{};
+  // Offline earnings
+  const lastTime=load('lastTime',Date.now());const elapsed=(Date.now()-lastTime)/1000;
+  calcStats();const offlineEarn=Math.floor(autoRate*multiplier*elapsed);if(offlineEarn>0)coins+=offlineEarn;
+  update();
+  // Auto-income loop
+  setInterval(()=>{if(autoRate>0){coins+=autoRate*multiplier;update();saveAll()}},1000)
+}
+</script></body></html>

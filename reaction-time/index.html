@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ທົດສອບປະຕິກິລິຍາ — Reaction Time</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+    :root{
+      --bg:#0f0f1a;--bg2:#1a1a2e;
+      --bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);
+      --text:#f0f0f5;--text2:#a0a0b8;--text3:#6b6b80;
+      --accent:#7C3AED;--accent2:#2563EB;
+      --accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);
+      --glow:rgba(124,58,237,0.3);
+      --success:#10b981;--warning:#f59e0b;--danger:#ef4444;
+      --font:'Noto Sans Lao','Phetsarath OT','Saysettha OT',system-ui,sans-serif;
+    }
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+    .bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}
+    .bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+
+    /* Header */
+    .game-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;position:relative;z-index:10}
+    @supports(padding:env(safe-area-inset-top)){.game-header{padding-top:calc(12px + env(safe-area-inset-top))}}
+    .game-title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+    .back-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+
+    /* Main area */
+    .test-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:background 0.3s;position:relative;padding:20px}
+    .test-area.waiting{background:#0f0f1a}
+    .test-area.ready{background:#ef4444}
+    .test-area.go{background:#22c55e}
+    .test-area.result{background:var(--bg)}
+    .test-area.too-early{background:#f59e0b}
+
+    .instruction{font-size:1.5rem;font-weight:700;text-align:center;line-height:1.5}
+    .sub-text{font-size:1rem;color:var(--text2);margin-top:8px;text-align:center}
+    .result-ms{font-size:5rem;font-weight:800;background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1}
+    .result-unit{font-size:1.2rem;color:var(--text2);margin-top:4px}
+    .rank-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 20px;border-radius:999px;font-size:1.1rem;font-weight:700;margin-top:16px}
+
+    /* Stats */
+    .stats-bar{display:flex;gap:8px;padding:12px 16px;justify-content:center;flex-wrap:wrap}
+    .stat-pill{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:999px;padding:6px 14px;font-size:0.75rem;display:flex;align-items:center;gap:6px}
+    .stat-pill .val{font-weight:700;color:var(--text)}
+    .stat-pill .lbl{color:var(--text2)}
+
+    /* History */
+    .history-section{padding:0 16px 20px;max-height:140px;overflow-y:auto}
+    .history-title{font-size:0.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px}
+    .history-list{display:flex;flex-wrap:wrap;gap:6px}
+    .history-item{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:600}
+
+    /* Mode selector */
+    .mode-bar{display:flex;gap:8px;padding:8px 16px;justify-content:center;flex-wrap:wrap}
+    .mode-btn{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:999px;padding:8px 16px;font-size:0.8rem;font-weight:600;color:var(--text2);cursor:pointer;font-family:var(--font);transition:all 0.2s}
+    .mode-btn.active{background:var(--accent-grad);color:white;border-color:transparent;box-shadow:0 0 15px var(--glow)}
+    .mode-btn:active{transform:scale(0.95)}
+
+    /* Overlay */
+    .overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}
+    .overlay.hidden{opacity:0;pointer-events:none}
+    .overlay-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s ease}
+    .overlay-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}
+    .overlay-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}
+    @keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}
+    .btn:active{transform:scale(0.96)}
+    .btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}
+    .btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}
+    .btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+
+    .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}
+    .stat-item{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}
+    .stat-value{font-size:1.8rem;font-weight:700;line-height:1.2}
+    .stat-label{font-size:0.7rem;color:var(--text2);margin-top:4px}
+
+    .sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+    @supports(padding:env(safe-area-inset-top)){.sound-btn{top:calc(12px + env(safe-area-inset-top))}}
+  </style>
+</head>
+<body>
+  <div class="bg-dec"></div>
+
+  <!-- START SCREEN -->
+  <div class="overlay" id="startScreen">
+    <div class="overlay-emoji">⚡</div>
+    <div class="overlay-title">ທົດສອບປະຕິກິລິຍາ</div>
+    <div class="overlay-sub">ວັດຄວາມໄວຂອງສະໝອງ — ແຕະເມື່ອເຫັນສີຂຽວ!</div>
+    <div class="stats-grid" id="startStats" style="display:none">
+      <div class="stat-item">
+        <div class="stat-value" id="startBest">—</div>
+        <div class="stat-label">ດີທີ່ສຸດ (ms)</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="startAvg">—</div>
+        <div class="stat-label">ສະເລ່ຍ (ms)</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="startGames">0</div>
+        <div class="stat-label">ທົດສອບແລ້ວ</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="startRank">—</div>
+        <div class="stat-label">ອັນດັບ</div>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startTest()">⚡ ເລີ່ມທົດສອບ</button>
+      <a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a>
+    </div>
+  </div>
+
+  <!-- GAME UI -->
+  <div class="game-header">
+    <a href="../index.html" class="back-btn">←</a>
+    <div class="game-title"><span>⚡</span><span>ທົດສອບປະຕິກິລິຍາ</span></div>
+    <div style="width:44px"></div>
+  </div>
+
+  <div class="mode-bar" id="modeBar" style="display:none">
+    <button class="mode-btn active" data-mode="visual" onclick="setMode('visual')">👁️ ສາຍຕາ</button>
+    <button class="mode-btn" data-mode="audio" onclick="setMode('audio')">👂 ສຽງ</button>
+    <button class="mode-btn" data-mode="aim" onclick="setMode('aim')">🎯 ເປົ້າ</button>
+  </div>
+
+  <div class="test-area waiting" id="testArea" style="display:none">
+    <div class="instruction" id="mainText">ແຕະເພື່ອເລີ່ມ</div>
+    <div class="sub-text" id="subText"></div>
+    <div class="result-ms" id="resultMs" style="display:none"></div>
+    <div class="result-unit" id="resultUnit" style="display:none">ມິນລີວິນາທີ</div>
+    <div class="rank-badge" id="rankBadge" style="display:none"></div>
+    <div id="aimTarget" style="display:none;width:80px;height:80px;border-radius:50%;background:#ef4444;position:absolute;box-shadow:0 0 30px rgba(239,68,68,0.5)"></div>
+  </div>
+
+  <div class="stats-bar" id="statsBar" style="display:none">
+    <div class="stat-pill"><span class="lbl">ດີທີ່ສຸດ</span><span class="val" id="bestMs">—</span></div>
+    <div class="stat-pill"><span class="lbl">ສະເລ່ຍ</span><span class="val" id="avgMs">—</span></div>
+    <div class="stat-pill"><span class="lbl">ຄັ້ງນີ້</span><span class="val" id="roundNum">0/5</span></div>
+  </div>
+
+  <div class="history-section" id="historySection" style="display:none">
+    <div class="history-title">ປະຫວັດ</div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
+  <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+  <script>
+    const GAME_ID='reaction-time';
+    let state='idle'; // idle, waiting, ready, go, result, too-early
+    let mode='visual';
+    let timeoutId=null;
+    let startTime=0;
+    let results=[];
+    let roundsPerTest=5;
+    let currentRound=0;
+    let soundEnabled=true;
+    let audioCtx=null;
+
+    // Storage
+    function save(k,v){try{localStorage.setItem(`game_${GAME_ID}_${k}`,JSON.stringify(v))}catch(e){}}
+    function load(k,d=null){try{const r=localStorage.getItem(`game_${GAME_ID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+
+    // Audio
+    function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume()}
+    function playTone(f,d,t='sine',v=0.2){if(!soundEnabled||!audioCtx)return;try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+d/1000);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d/1000)}catch(e){}}
+    function playGo(){playTone(880,150,'sine',0.3);setTimeout(()=>playTone(1108,200,'sine',0.3),100)}
+    function playTap(){playTone(600,50,'square',0.15)}
+    function playTooEarly(){playTone(200,300,'sawtooth',0.2)}
+
+    // Audio unlock
+    (function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('touchend',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('touchend',u,true);document.addEventListener('click',u,true)})();
+
+    function toggleSound(){soundEnabled=!soundEnabled;document.getElementById('soundBtn').textContent=soundEnabled?'🔊':'🔇'}
+
+    // Ranks
+    function getRank(ms){
+      if(ms<150)return{name:'🤖 ຫຸ່ນຍົນ',color:'#a855f7',bg:'rgba(168,85,247,0.15)'};
+      if(ms<200)return{name:'🥷 ນິນຈາ',color:'#ef4444',bg:'rgba(239,68,68,0.15)'};
+      if(ms<250)return{name:'🐱 ແມວ',color:'#f59e0b',bg:'rgba(245,158,11,0.15)'};
+      if(ms<300)return{name:'🏃 ນັກແລ່ນ',color:'#3b82f6',bg:'rgba(59,130,246,0.15)'};
+      if(ms<400)return{name:'🧑 ຄົນທຳມະດາ',color:'#10b981',bg:'rgba(16,185,129,0.15)'};
+      return{name:'🐢 ເຕົ່າ',color:'#6b7280',bg:'rgba(107,114,128,0.15)'};
+    }
+
+    function setMode(m){
+      mode=m;
+      document.querySelectorAll('.mode-btn').forEach(b=>{
+        b.classList.toggle('active',b.dataset.mode===m);
+      });
+      resetTest();
+    }
+
+    function startTest(){
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('testArea').style.display='flex';
+      document.getElementById('statsBar').style.display='flex';
+      document.getElementById('modeBar').style.display='flex';
+      document.getElementById('historySection').style.display='block';
+      results=[];
+      currentRound=0;
+      updateStats();
+      resetTest();
+    }
+
+    function resetTest(){
+      clearTimeout(timeoutId);
+      state='idle';
+      const area=document.getElementById('testArea');
+      area.className='test-area waiting';
+      document.getElementById('mainText').style.display='block';
+      document.getElementById('subText').style.display='block';
+      document.getElementById('resultMs').style.display='none';
+      document.getElementById('resultUnit').style.display='none';
+      document.getElementById('rankBadge').style.display='none';
+      document.getElementById('aimTarget').style.display='none';
+
+      if(mode==='visual'){
+        document.getElementById('mainText').textContent='ແຕະເພື່ອເລີ່ມ';
+        document.getElementById('subText').textContent='ລໍຖ້າສີຂຽວ ແລ້ວແຕະໄວທີ່ສຸດ!';
+      } else if(mode==='audio'){
+        document.getElementById('mainText').textContent='ແຕະເພື່ອເລີ່ມ';
+        document.getElementById('subText').textContent='ຟັງສຽງ ແລ້ວແຕະໄວທີ່ສຸດ!';
+      } else {
+        document.getElementById('mainText').textContent='ແຕະເພື່ອເລີ່ມ';
+        document.getElementById('subText').textContent='ແຕະເປົ້າແດງໄວທີ່ສຸດ!';
+      }
+    }
+
+    function beginWaiting(){
+      state='waiting';
+      const area=document.getElementById('testArea');
+      area.className='test-area ready';
+      document.getElementById('mainText').textContent='ລໍຖ້າ...';
+      document.getElementById('subText').textContent=mode==='audio'?'ຟັງສຽງ!':'ຢ່າແຕະເທື່ອ!';
+      document.getElementById('aimTarget').style.display='none';
+
+      const delay=1500+Math.random()*3500;
+      timeoutId=setTimeout(()=>{
+        state='go';
+        startTime=performance.now();
+        if(mode==='visual'){
+          area.className='test-area go';
+          document.getElementById('mainText').textContent='ແຕະດຽວນີ້!';
+          document.getElementById('subText').textContent='';
+        } else if(mode==='audio'){
+          area.className='test-area waiting';
+          document.getElementById('mainText').textContent='ແຕະດຽວນີ້!';
+          document.getElementById('subText').textContent='';
+          playGo();
+        } else {
+          area.className='test-area waiting';
+          document.getElementById('mainText').style.display='none';
+          document.getElementById('subText').style.display='none';
+          const target=document.getElementById('aimTarget');
+          const areaRect=area.getBoundingClientRect();
+          const maxX=areaRect.width-100;
+          const maxY=areaRect.height-100;
+          target.style.left=(20+Math.random()*maxX)+'px';
+          target.style.top=(20+Math.random()*maxY)+'px';
+          target.style.display='block';
+        }
+      },delay);
+    }
+
+    document.getElementById('testArea').addEventListener('click',function(e){
+      if(state==='idle'){
+        currentRound=0;
+        results=[];
+        updateStats();
+        beginWaiting();
+        return;
+      }
+      if(state==='waiting'){
+        clearTimeout(timeoutId);
+        state='too-early';
+        const area=document.getElementById('testArea');
+        area.className='test-area too-early';
+        document.getElementById('mainText').textContent='ໄວເກີນໄປ! ⚠️';
+        document.getElementById('subText').textContent='ແຕະເພື່ອລອງໃໝ່';
+        playTooEarly();
+        if(navigator.vibrate)navigator.vibrate([100,30,100]);
+        setTimeout(()=>{state='idle';resetTest()},1500);
+        return;
+      }
+      if(state==='go'){
+        if(mode==='aim'){
+          const target=document.getElementById('aimTarget');
+          const rect=target.getBoundingClientRect();
+          const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+          const ex=e.clientX||e.touches?.[0]?.clientX||cx;
+          const ey=e.clientY||e.touches?.[0]?.clientY||cy;
+          const dist=Math.sqrt((ex-cx)**2+(ey-cy)**2);
+          if(dist>60)return;
+          target.style.display='none';
+        }
+        const elapsed=Math.round(performance.now()-startTime);
+        state='result';
+        currentRound++;
+        results.push(elapsed);
+        playTap();
+        if(navigator.vibrate)navigator.vibrate(30);
+        showRoundResult(elapsed);
+        return;
+      }
+      if(state==='result'){
+        if(currentRound>=roundsPerTest){
+          showFinalResult();
+        } else {
+          document.getElementById('resultMs').style.display='none';
+          document.getElementById('resultUnit').style.display='none';
+          document.getElementById('rankBadge').style.display='none';
+          beginWaiting();
+        }
+      }
+    });
+
+    function showRoundResult(ms){
+      const area=document.getElementById('testArea');
+      area.className='test-area result';
+      document.getElementById('mainText').textContent='';
+      document.getElementById('mainText').style.display='none';
+      document.getElementById('subText').style.display='block';
+      document.getElementById('subText').textContent=currentRound<roundsPerTest?'ແຕະເພື່ອສືບຕໍ່':'ແຕະເພື່ອເບິ່ງຜົນ';
+      document.getElementById('resultMs').textContent=ms;
+      document.getElementById('resultMs').style.display='block';
+      document.getElementById('resultUnit').style.display='block';
+
+      const rank=getRank(ms);
+      const badge=document.getElementById('rankBadge');
+      badge.textContent=rank.name;
+      badge.style.background=rank.bg;
+      badge.style.color=rank.color;
+      badge.style.display='inline-flex';
+      updateStats();
+    }
+
+    function showFinalResult(){
+      const avg=Math.round(results.reduce((a,b)=>a+b,0)/results.length);
+      const best=Math.min(...results);
+
+      // Save history
+      const history=load('history',[]);
+      history.unshift({date:new Date().toISOString().slice(0,10),avg,best,results:[...results],mode});
+      if(history.length>50)history.length=50;
+      save('history',history);
+
+      // Update best
+      const prevBest=load('bestTime',9999);
+      if(best<prevBest)save('bestTime',best);
+
+      const totalTests=load('totalTests',0)+1;
+      save('totalTests',totalTests);
+
+      renderHistory();
+      state='idle';
+      resetTest();
+      document.getElementById('mainText').textContent=`ສະເລ່ຍ: ${avg}ms`;
+      document.getElementById('subText').textContent=`ດີທີ່ສຸດ: ${best}ms — ແຕະເພື່ອລອງໃໝ່`;
+    }
+
+    function updateStats(){
+      const best=results.length?Math.min(...results):load('bestTime',null);
+      const avg=results.length?Math.round(results.reduce((a,b)=>a+b,0)/results.length):null;
+      document.getElementById('bestMs').textContent=best?best+'ms':'—';
+      document.getElementById('avgMs').textContent=avg?avg+'ms':'—';
+      document.getElementById('roundNum').textContent=`${currentRound}/${roundsPerTest}`;
+    }
+
+    function renderHistory(){
+      const history=load('history',[]);
+      const list=document.getElementById('historyList');
+      list.innerHTML='';
+      history.slice(0,20).forEach(h=>{
+        const el=document.createElement('div');
+        el.className='history-item';
+        el.textContent=`${h.avg}ms`;
+        el.style.color=getRank(h.avg).color;
+        list.appendChild(el);
+      });
+    }
+
+    function loadStartStats(){
+      const best=load('bestTime',null);
+      const total=load('totalTests',0);
+      const history=load('history',[]);
+      if(total>0){
+        document.getElementById('startStats').style.display='grid';
+        document.getElementById('startBest').textContent=best?best+'ms':'—';
+        const allAvgs=history.map(h=>h.avg);
+        const globalAvg=allAvgs.length?Math.round(allAvgs.reduce((a,b)=>a+b,0)/allAvgs.length):null;
+        document.getElementById('startAvg').textContent=globalAvg?globalAvg+'ms':'—';
+        document.getElementById('startGames').textContent=total;
+        document.getElementById('startRank').textContent=best?getRank(best).name:'—';
+      }
+    }
+
+    loadStartStats();
+    renderHistory();
+  </script>
+</body>
+</html>

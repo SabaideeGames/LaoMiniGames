@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="lo"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>ຈື່ລວດລາຍ — Pattern Lock</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--danger:#ef4444;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+.bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}.bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}
+@supports(padding:env(safe-area-inset-top)){.header{padding-top:calc(12px + env(safe-area-inset-top))}}
+.title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.back{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.info{display:flex;gap:12px;font-size:0.85rem;font-weight:600}.pill{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:999px;padding:4px 12px}
+.area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px}
+.status{font-size:1.2rem;font-weight:700;text-align:center;min-height:36px}
+.grid{display:grid;gap:16px}
+.dot{border-radius:50%;background:var(--bg-glass);border:3px solid var(--border-glass);transition:all 0.2s;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.dot.lit{background:var(--accent);border-color:var(--accent);box-shadow:0 0 20px var(--glow)}
+.dot.correct{background:var(--success);border-color:var(--success);box-shadow:0 0 20px rgba(16,185,129,0.4)}
+.dot.wrong{background:var(--danger);border-color:var(--danger);box-shadow:0 0 20px rgba(239,68,68,0.4)}
+.overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}
+.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s ease}
+.ov-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}
+.ov-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}
+@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}
+.stat-item{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}
+.stat-value{font-size:1.8rem;font-weight:700;line-height:1.2}.stat-label{font-size:0.7rem;color:var(--text2);margin-top:4px}
+.new-rec{display:inline-flex;padding:4px 14px;border-radius:999px;font-size:0.8rem;font-weight:600;background:rgba(16,185,129,0.15);color:var(--success);margin-bottom:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}
+.btn:active{transform:scale(0.96)}.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}
+.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+.sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+</style></head>
+<body>
+<div class="bg-dec"></div>
+<div class="overlay" id="start">
+  <div class="ov-emoji">🔐</div><div class="ov-title">ຈື່ລວດລາຍ</div>
+  <div class="ov-sub">ຈື່ລຳດັບທີ່ສະແດງ ແລ້ວກົດຕາມ!</div>
+  <div class="stats-grid" id="ss" style="display:none"><div class="stat-item"><div class="stat-value" id="sb">0</div><div class="stat-label">ຄະແນນສູງສຸດ</div></div><div class="stat-item"><div class="stat-value" id="sp">0</div><div class="stat-label">ຫຼິ້ນແລ້ວ</div></div></div>
+  <div class="btn-group"><button class="btn btn-primary" onclick="startGame()">🔐 ເລີ່ມ</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div>
+</div>
+<div class="overlay hidden" id="goScreen">
+  <div class="ov-emoji" id="ge">😢</div><div class="ov-title">ຈົບເກມ</div>
+  <div class="new-rec hidden" id="nr">🏆 ສະຖິຕິໃໝ່!</div>
+  <div class="stats-grid"><div class="stat-item"><div class="stat-value" id="fs">0</div><div class="stat-label">ຄະແນນ</div></div><div class="stat-item"><div class="stat-value" id="fb" style="background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">0</div><div class="stat-label">ດີທີ່ສຸດ</div></div></div>
+  <div class="btn-group"><button class="btn btn-primary" onclick="startGame()">🔄 ລອງໃໝ່</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div>
+</div>
+<div class="header" id="hdr" style="display:none"><a href="../index.html" class="back">←</a><div class="title"><span>🔐</span><span>ຈື່ລວດລາຍ</span></div><div class="info"><div class="pill" id="lvl">ລະດັບ: 1</div><div class="pill" id="best">ດີສຸດ: 0</div></div></div>
+<div class="area" id="ga" style="display:none"><div class="status" id="stat">ເບິ່ງລວດລາຍ...</div><div class="grid" id="grid"></div></div>
+<button class="sound-btn" id="snd" onclick="toggleSound()">🔊</button>
+<script>
+const GID='pattern-lock';let seq=[],playerSeq=[],level=0,phase='watch',gridSize=3,soundOn=true,ac=null;
+function save(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function load(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
+function playTone(f,d,t='sine',v=0.2){if(!soundOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+(function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+function toggleSound(){soundOn=!soundOn;document.getElementById('snd').textContent=soundOn?'🔊':'🔇'}
+const NOTES=[262,294,330,349,392,440,494,523,587];
+function buildGrid(){
+  const g=document.getElementById('grid');const cs=Math.min(Math.floor((Math.min(window.innerWidth,400)-60)/gridSize),80);
+  g.style.gridTemplateColumns=`repeat(${gridSize},${cs}px)`;g.innerHTML='';
+  for(let i=0;i<gridSize*gridSize;i++){const d=document.createElement('div');d.className='dot';d.style.width=cs+'px';d.style.height=cs+'px';d.dataset.idx=i;d.onclick=()=>playerTap(i);g.appendChild(d)}
+}
+function startGame(){
+  document.querySelectorAll('.overlay').forEach(o=>o.classList.add('hidden'));
+  document.getElementById('hdr').style.display='flex';document.getElementById('ga').style.display='flex';
+  seq=[];level=0;gridSize=3;
+  document.getElementById('best').textContent='ດີສຸດ: '+load('highScore',0);
+  buildGrid();nextLevel()
+}
+function nextLevel(){
+  level++;if(level>5&&gridSize<4){gridSize=4;buildGrid()}if(level>12&&gridSize<5){gridSize=5;buildGrid()}
+  seq.push(Math.floor(Math.random()*(gridSize*gridSize)));
+  document.getElementById('lvl').textContent='ລະດັບ: '+level;
+  document.getElementById('stat').textContent='ເບິ່ງລວດລາຍ...';
+  phase='watch';showSequence()
+}
+function showSequence(){
+  let i=0;const dots=document.querySelectorAll('.dot');
+  const iv=setInterval(()=>{
+    dots.forEach(d=>d.className='dot');
+    if(i>=seq.length){clearInterval(iv);phase='input';playerSeq=[];document.getElementById('stat').textContent='ກົດຕາມລຳດັບ!';return}
+    const d=dots[seq[i]];d.classList.add('lit');playTone(NOTES[seq[i]%NOTES.length],200,'sine',0.25);
+    setTimeout(()=>d.classList.remove('lit'),400);i++
+  },600)
+}
+function playerTap(idx){
+  if(phase!=='input')return;
+  const dots=document.querySelectorAll('.dot');const d=dots[idx];
+  playerSeq.push(idx);
+  const ci=playerSeq.length-1;
+  if(idx===seq[ci]){
+    d.classList.add('correct');playTone(NOTES[idx%NOTES.length],150,'sine',0.2);if(navigator.vibrate)navigator.vibrate(20);
+    setTimeout(()=>d.classList.remove('correct'),300);
+    if(playerSeq.length===seq.length){phase='watch';document.getElementById('stat').textContent='ສຳເລັດ! ✨';
+      playTone(523,80,'sine',0.3);setTimeout(()=>playTone(659,80,'sine',0.3),80);setTimeout(()=>playTone(784,100,'sine',0.3),160);
+      setTimeout(nextLevel,1000)}
+  } else {
+    d.classList.add('wrong');playTone(200,300,'sawtooth',0.2);if(navigator.vibrate)navigator.vibrate([100,50,100]);
+    phase='done';document.getElementById('stat').textContent='ຜິດ! ❌';
+    const score=level-1;const isNew=score>load('highScore',0);if(isNew)save('highScore',score);
+    const plays=load('totalGames',0)+1;save('totalGames',plays);
+    setTimeout(()=>{document.getElementById('hdr').style.display='none';document.getElementById('ga').style.display='none';
+      document.getElementById('ge').textContent=score>=15?'🏆':score>=8?'🧠':'😢';
+      document.getElementById('fs').textContent=score;document.getElementById('fb').textContent=Math.max(score,load('highScore',0));
+      document.getElementById('nr').classList.toggle('hidden',!isNew);document.getElementById('goScreen').classList.remove('hidden')},800)
+  }
+}
+const hs=load('highScore',0),tg=load('totalGames',0);if(tg>0){document.getElementById('ss').style.display='grid';document.getElementById('sb').textContent=hs;document.getElementById('sp').textContent=tg}
+</script></body></html>

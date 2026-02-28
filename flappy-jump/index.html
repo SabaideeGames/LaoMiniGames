@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ໂຕນບິນ — Flappy Jump</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+    :root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent2:#2563EB;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--danger:#ef4444;--font:'Noto Sans Lao','Phetsarath OT','Saysettha OT',system-ui,sans-serif}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+    .bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}
+    .bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+    .game-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}
+    @supports(padding:env(safe-area-inset-top)){.game-header{padding-top:calc(12px + env(safe-area-inset-top))}}
+    .game-title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+    .back-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+    .header-scores{display:flex;gap:16px}.header-score{text-align:center}.header-score-label{font-size:0.65rem;color:var(--text2)}.header-score-value{font-size:1.1rem;font-weight:700}.header-score-value.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .game-area{flex:1;display:flex;align-items:center;justify-content:center;touch-action:manipulation;cursor:pointer}
+    canvas{display:block;max-width:100%;border-radius:12px}
+    .overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}
+    .overlay.hidden{opacity:0;pointer-events:none}
+    .overlay-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s ease}
+    .overlay-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}
+    .overlay-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}
+    @keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+    .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}
+    .stat-item{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}
+    .stat-value{font-size:1.8rem;font-weight:700;line-height:1.2}.stat-label{font-size:0.7rem;color:var(--text2);margin-top:4px}
+    .new-record{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:999px;font-size:0.8rem;font-weight:600;background:rgba(16,185,129,0.15);color:var(--success);margin-bottom:20px;animation:scaleIn 0.4s ease 0.3s both}
+    @keyframes scaleIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}
+    .medal-row{display:flex;gap:8px;margin-bottom:16px}
+    .medal{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;opacity:0.3;border:2px solid var(--border-glass)}
+    .medal.earned{opacity:1;box-shadow:0 0 15px rgba(255,255,255,0.1)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}
+    .btn:active{transform:scale(0.96)}
+    .btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}
+    .btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}
+    .btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+    .sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+    @supports(padding:env(safe-area-inset-top)){.sound-btn{top:calc(12px + env(safe-area-inset-top))}}
+  </style>
+</head>
+<body>
+  <div class="bg-dec"></div>
+  <div class="overlay" id="startScreen">
+    <div class="overlay-emoji">🐦</div>
+    <div class="overlay-title">ໂຕນບິນ</div>
+    <div class="overlay-sub">ແຕະເພື່ອບິນ — ຫຼີກລ້ຽງເສົາ!</div>
+    <div class="stats-grid" id="startStats" style="display:none">
+      <div class="stat-item"><div class="stat-value" id="startBest">0</div><div class="stat-label">ຄະແນນສູງສຸດ</div></div>
+      <div class="stat-item"><div class="stat-value" id="startPlays">0</div><div class="stat-label">ຫຼິ້ນແລ້ວ</div></div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startGame()">🐦 ເລີ່ມຫຼິ້ນ</button>
+      <a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a>
+    </div>
+  </div>
+  <div class="overlay hidden" id="gameOverScreen">
+    <div class="overlay-emoji" id="goEmoji">😢</div>
+    <div class="overlay-title">ຈົບເກມ</div>
+    <div class="new-record hidden" id="newRecord">🏆 ສະຖິຕິໃໝ່!</div>
+    <div class="medal-row" id="medalRow">
+      <div class="medal" id="medal1" style="background:rgba(205,127,50,0.2);border-color:#CD7F32">🥉</div>
+      <div class="medal" id="medal2" style="background:rgba(192,192,192,0.2);border-color:#C0C0C0">🥈</div>
+      <div class="medal" id="medal3" style="background:rgba(255,215,0,0.2);border-color:#FFD700">🥇</div>
+      <div class="medal" id="medal4" style="background:rgba(168,85,247,0.2);border-color:#A855F7">💎</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-value" id="finalScore">0</div><div class="stat-label">ຄະແນນ</div></div>
+      <div class="stat-item"><div class="stat-value best" id="finalBest" style="background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">0</div><div class="stat-label">ດີທີ່ສຸດ</div></div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startGame()">🔄 ລອງໃໝ່</button>
+      <a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a>
+    </div>
+  </div>
+  <div class="game-header" id="gameHeader" style="display:none">
+    <a href="../index.html" class="back-btn">←</a>
+    <div class="game-title"><span>🐦</span><span>ໂຕນບິນ</span></div>
+    <div class="header-scores">
+      <div class="header-score"><div class="header-score-label">ຄະແນນ</div><div class="header-score-value" id="scoreVal">0</div></div>
+      <div class="header-score"><div class="header-score-label">ດີທີ່ສຸດ</div><div class="header-score-value best" id="bestVal">0</div></div>
+    </div>
+  </div>
+  <div class="game-area" id="gameArea" style="display:none" onclick="flap()">
+    <canvas id="c"></canvas>
+  </div>
+  <button class="sound-btn" id="soundBtn" onclick="event.stopPropagation();toggleSound()">🔊</button>
+
+  <script>
+    const GAME_ID='flappy-jump';
+    const canvas=document.getElementById('c');
+    const ctx=canvas.getContext('2d');
+    let W,H,dpr;
+    let bird,pipes,score,gameRunning,gameStarted,frameCount;
+    const GRAVITY=0.4,FLAP=-7,PIPE_WIDTH=52,PIPE_GAP=150,PIPE_SPEED=2.5;
+    let soundEnabled=true,audioCtx=null;
+
+    function save(k,v){try{localStorage.setItem(`game_${GAME_ID}_${k}`,JSON.stringify(v))}catch(e){}}
+    function load(k,d=null){try{const r=localStorage.getItem(`game_${GAME_ID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+    function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume()}
+    function playTone(f,d,t='sine',v=0.2){if(!soundEnabled||!audioCtx)return;try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+d/1000);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d/1000)}catch(e){}}
+    (function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('touchend',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('touchend',u,true);document.addEventListener('click',u,true)})();
+    function toggleSound(){soundEnabled=!soundEnabled;document.getElementById('soundBtn').textContent=soundEnabled?'🔊':'🔇'}
+
+    function resize(){
+      const area=document.getElementById('gameArea');
+      const rect=area.getBoundingClientRect();
+      dpr=window.devicePixelRatio||1;
+      W=Math.min(rect.width-16,420);H=Math.min(rect.height-16,700);
+      canvas.style.width=W+'px';canvas.style.height=H+'px';
+      canvas.width=W*dpr;canvas.height=H*dpr;
+      ctx.scale(dpr,dpr);
+    }
+
+    function flap(){
+      if(!gameRunning)return;
+      if(!gameStarted)gameStarted=true;
+      bird.vy=FLAP;
+      playTone(400,50,'sine',0.15);
+    }
+
+    function spawnPipe(){
+      const minY=80;const maxY=H-PIPE_GAP-80;
+      const topH=minY+Math.random()*(maxY-minY);
+      pipes.push({x:W,topH:topH,scored:false});
+    }
+
+    function startGame(){
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('gameOverScreen').classList.add('hidden');
+      document.getElementById('gameHeader').style.display='flex';
+      document.getElementById('gameArea').style.display='flex';
+      resize();
+      bird={x:W*0.25,y:H/2,vy:0,size:18};
+      pipes=[];score=0;frameCount=0;gameRunning=true;gameStarted=false;
+      document.getElementById('scoreVal').textContent='0';
+      document.getElementById('bestVal').textContent=load('highScore',0);
+      spawnPipe();
+      gameLoop();
+    }
+
+    function gameLoop(){
+      ctx.clearRect(0,0,W,H);
+      frameCount++;
+
+      // Background gradient
+      const grad=ctx.createLinearGradient(0,0,0,H);
+      grad.addColorStop(0,'#1a1a2e');grad.addColorStop(1,'#0f0f1a');
+      ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+
+      // Stars
+      if(frameCount%2===0){
+        for(let i=0;i<5;i++){
+          const sx=(frameCount*0.5+i*87)%W;
+          const sy=(i*143+frameCount*0.1)%H;
+          ctx.fillStyle=`rgba(255,255,255,${0.2+Math.sin(frameCount*0.05+i)*0.15})`;
+          ctx.fillRect(sx,sy,1.5,1.5);
+        }
+      }
+
+      if(gameStarted){
+        // Bird physics
+        bird.vy+=GRAVITY;
+        bird.y+=bird.vy;
+
+        // Pipes
+        for(let i=pipes.length-1;i>=0;i--){
+          const p=pipes[i];
+          p.x-=PIPE_SPEED;
+          // Score
+          if(!p.scored&&p.x+PIPE_WIDTH<bird.x){
+            p.scored=true;score++;
+            document.getElementById('scoreVal').textContent=score;
+            playTone(523,60,'sine',0.2);
+          }
+          // Remove offscreen
+          if(p.x+PIPE_WIDTH<0)pipes.splice(i,1);
+        }
+
+        // Spawn new pipes
+        if(frameCount%90===0)spawnPipe();
+
+        // Collision
+        const bx=bird.x,by=bird.y,bs=bird.size;
+        if(by-bs<0||by+bs>H){gameOver();return}
+        for(const p of pipes){
+          if(bx+bs>p.x&&bx-bs<p.x+PIPE_WIDTH){
+            if(by-bs<p.topH||by+bs>p.topH+PIPE_GAP){gameOver();return}
+          }
+        }
+      }
+
+      // Draw pipes
+      pipes.forEach(p=>{
+        // Top pipe
+        const pGrad1=ctx.createLinearGradient(p.x,0,p.x+PIPE_WIDTH,0);
+        pGrad1.addColorStop(0,'#22c55e');pGrad1.addColorStop(0.5,'#16a34a');pGrad1.addColorStop(1,'#15803d');
+        ctx.fillStyle=pGrad1;
+        ctx.fillRect(p.x,0,PIPE_WIDTH,p.topH);
+        ctx.fillRect(p.x-4,p.topH-20,PIPE_WIDTH+8,20);
+        // Bottom pipe
+        ctx.fillRect(p.x,p.topH+PIPE_GAP,PIPE_WIDTH,H-p.topH-PIPE_GAP);
+        ctx.fillRect(p.x-4,p.topH+PIPE_GAP,PIPE_WIDTH+8,20);
+        // Pipe borders
+        ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=1;
+        ctx.strokeRect(p.x,0,PIPE_WIDTH,p.topH);
+        ctx.strokeRect(p.x,p.topH+PIPE_GAP,PIPE_WIDTH,H-p.topH-PIPE_GAP);
+      });
+
+      // Draw bird
+      ctx.save();
+      ctx.translate(bird.x,bird.y);
+      const rot=Math.min(Math.max(bird.vy*3,-30),90)*Math.PI/180;
+      ctx.rotate(rot);
+      // Body
+      ctx.fillStyle='#fbbf24';
+      ctx.beginPath();ctx.ellipse(0,0,bird.size,bird.size*0.8,0,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='#f59e0b';ctx.lineWidth=2;ctx.stroke();
+      // Eye
+      ctx.fillStyle='white';ctx.beginPath();ctx.arc(8,-4,6,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.arc(10,-4,3,0,Math.PI*2);ctx.fill();
+      // Beak
+      ctx.fillStyle='#ef4444';ctx.beginPath();ctx.moveTo(14,2);ctx.lineTo(22,0);ctx.lineTo(14,6);ctx.closePath();ctx.fill();
+      // Wing
+      ctx.fillStyle='#d97706';
+      ctx.beginPath();ctx.ellipse(-6,4,10,6,bird.vy<0?-0.3:0.3,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+
+      // Ground line
+      ctx.fillStyle='rgba(255,255,255,0.05)';
+      ctx.fillRect(0,H-2,W,2);
+
+      // Score big display (when playing)
+      if(gameStarted){
+        ctx.fillStyle='rgba(255,255,255,0.15)';
+        ctx.font='bold 72px system-ui';ctx.textAlign='center';
+        ctx.fillText(score,W/2,H*0.2);
+      }
+
+      if(!gameStarted&&gameRunning){
+        // Idle bob
+        bird.y=H/2+Math.sin(frameCount*0.05)*10;
+        ctx.fillStyle='rgba(255,255,255,0.5)';
+        ctx.font='16px var(--font)';ctx.textAlign='center';
+        ctx.fillText('👆 ແຕະເພື່ອບິນ',W/2,H*0.7);
+      }
+
+      if(gameRunning)requestAnimationFrame(gameLoop);
+    }
+
+    function gameOver(){
+      gameRunning=false;
+      playTone(200,300,'sawtooth',0.2);
+      if(navigator.vibrate)navigator.vibrate([100,50,100]);
+      const isNew=score>load('highScore',0);
+      if(isNew)save('highScore',score);
+      const plays=load('totalGames',0)+1;save('totalGames',plays);
+
+      document.getElementById('gameHeader').style.display='none';
+      document.getElementById('gameArea').style.display='none';
+      document.getElementById('goEmoji').textContent=score>=50?'🏆':score>=25?'🥇':score>=10?'🐦':'😢';
+      document.getElementById('finalScore').textContent=score;
+      document.getElementById('finalBest').textContent=Math.max(score,load('highScore',0));
+      document.getElementById('newRecord').classList.toggle('hidden',!isNew);
+      // Medals
+      document.getElementById('medal1').classList.toggle('earned',score>=10);
+      document.getElementById('medal2').classList.toggle('earned',score>=25);
+      document.getElementById('medal3').classList.toggle('earned',score>=50);
+      document.getElementById('medal4').classList.toggle('earned',score>=100);
+      document.getElementById('gameOverScreen').classList.remove('hidden');
+    }
+
+    window.addEventListener('resize',()=>{if(gameRunning)resize()});
+    const hs=load('highScore',0),tg=load('totalGames',0);
+    if(tg>0){document.getElementById('startStats').style.display='grid';document.getElementById('startBest').textContent=hs;document.getElementById('startPlays').textContent=tg}
+  </script>
+</body>
+</html>

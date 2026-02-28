@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="lo"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>ສະຫຼັບສີ — Color Switch</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--danger:#ef4444;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+.bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}.bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}
+@supports(padding:env(safe-area-inset-top)){.header{padding-top:calc(12px + env(safe-area-inset-top))}}
+.title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.back{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.scores{display:flex;gap:16px}.sc{text-align:center}.sc-l{font-size:0.65rem;color:var(--text2)}.sc-v{font-size:1.1rem;font-weight:700}.sc-v.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ga{flex:1;display:flex;align-items:center;justify-content:center;touch-action:manipulation;cursor:pointer}
+canvas{display:block;max-width:100%;border-radius:12px}
+.overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}
+.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s ease}.ov-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}.ov-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}
+@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}
+.si{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}
+.sv{font-size:1.8rem;font-weight:700;line-height:1.2}.sl{font-size:0.7rem;color:var(--text2);margin-top:4px}
+.nr{display:inline-flex;padding:4px 14px;border-radius:999px;font-size:0.8rem;font-weight:600;background:rgba(16,185,129,0.15);color:var(--success);margin-bottom:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}
+.btn:active{transform:scale(0.96)}.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}
+.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+.sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+</style></head>
+<body><div class="bg-dec"></div>
+<div class="overlay" id="startScr">
+  <div class="ov-emoji">🌈</div><div class="ov-title">ສະຫຼັບສີ</div><div class="ov-sub">ແຕະເພື່ອບິນ — ຜ່ານໃຫ້ຖືກສີ!</div>
+  <div class="sg" id="ss" style="display:none"><div class="si"><div class="sv" id="sBest">0</div><div class="sl">ຄະແນນສູງສຸດ</div></div><div class="si"><div class="sv" id="sPlays">0</div><div class="sl">ຫຼິ້ນແລ້ວ</div></div></div>
+  <div class="btn-group"><button class="btn btn-primary" onclick="startGame()">🌈 ເລີ່ມ</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div>
+</div>
+<div class="overlay hidden" id="goScr">
+  <div class="ov-emoji" id="ge">😢</div><div class="ov-title">ຈົບເກມ</div>
+  <div class="nr hidden" id="newRec">🏆 ສະຖິຕິໃໝ່!</div>
+  <div class="sg"><div class="si"><div class="sv" id="fScore">0</div><div class="sl">ຄະແນນ</div></div><div class="si"><div class="sv" id="fBest" style="background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">0</div><div class="sl">ດີທີ່ສຸດ</div></div></div>
+  <div class="btn-group"><button class="btn btn-primary" onclick="startGame()">🔄 ລອງໃໝ່</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div>
+</div>
+<div class="header" id="hdr" style="display:none"><a href="../index.html" class="back">←</a><div class="title"><span>🌈</span><span>ສະຫຼັບສີ</span></div><div class="scores"><div class="sc"><div class="sc-l">ຄະແນນ</div><div class="sc-v" id="scV">0</div></div><div class="sc"><div class="sc-l">ດີສຸດ</div><div class="sc-v best" id="bV">0</div></div></div></div>
+<div class="ga" id="gameArea" style="display:none" onclick="flap()"><canvas id="c"></canvas></div>
+<button class="sound-btn" id="snd" onclick="sndOn=!sndOn;this.textContent=sndOn?'🔊':'🔇'">🔊</button>
+<script>
+const GID='color-switch',cv=document.getElementById('c'),cx=cv.getContext('2d');
+const COLORS=['#EF4444','#FBBF24','#22C55E','#3B82F6'];
+let W,H,ball,obstacles,score,running,frame,sndOn=true,ac=null;
+function save(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function load(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
+function playTone(f,d,t='sine',v=0.2){if(!sndOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+(function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+
+function resize(){const a=document.getElementById('gameArea'),r=a.getBoundingClientRect(),dp=devicePixelRatio||1;W=Math.min(r.width-16,420);H=Math.min(r.height-16,700);cv.style.width=W+'px';cv.style.height=H+'px';cv.width=W*dp;cv.height=H*dp;cx.scale(dp,dp)}
+function flap(){if(!running)return;ball.vy=-7;playTone(400,50,'sine',0.15)}
+function spawnObs(y){
+  const r=60+Math.random()*20;const speed=0.015+Math.min(score*0.001,0.03);
+  obstacles.push({y,r,angle:Math.random()*Math.PI*2,speed,scored:false});
+  // Color switcher
+  obstacles.push({y:y-r-40,type:'switcher'});
+}
+function startGame(){
+  document.querySelectorAll('.overlay').forEach(o=>o.classList.add('hidden'));
+  document.getElementById('hdr').style.display='flex';document.getElementById('gameArea').style.display='flex';
+  resize();score=0;frame=0;running=true;
+  ball={x:W/2,y:H*0.6,vy:0,color:0,r:10};
+  obstacles=[];spawnObs(H*0.3);spawnObs(H*0.3-250);spawnObs(H*0.3-500);
+  document.getElementById('scV').textContent='0';document.getElementById('bV').textContent=load('hs',0);
+  loop()
+}
+function loop(){
+  cx.clearRect(0,0,W,H);frame++;
+  // BG
+  cx.fillStyle='#0f0f1a';cx.fillRect(0,0,W,H);
+  // Physics
+  ball.vy+=0.35;ball.y+=ball.vy;
+  // Camera
+  const targetY=Math.min(ball.y-H*0.6,0);
+  const camY=targetY;
+  // Draw obstacles
+  for(let i=obstacles.length-1;i>=0;i--){
+    const o=obstacles[i];const sy=o.y-camY;
+    if(sy>H+200){obstacles.splice(i,1);continue}
+    if(o.type==='switcher'){
+      // Draw color switcher diamond
+      cx.save();cx.translate(W/2,sy);cx.rotate(frame*0.03);
+      cx.beginPath();cx.moveTo(0,-12);cx.lineTo(12,0);cx.lineTo(0,12);cx.lineTo(-12,0);cx.closePath();
+      cx.fillStyle='white';cx.fill();cx.restore();
+      // Collision -> change color
+      if(Math.abs(ball.y-o.y)<15&&Math.abs(ball.x-W/2)<15){
+        ball.color=(ball.color+1+Math.floor(Math.random()*3))%4;
+        obstacles.splice(i,1);playTone(880,80,'sine',0.25);continue
+      }
+      continue
+    }
+    // Rotating ring
+    o.angle+=o.speed;
+    cx.save();cx.translate(W/2,sy);
+    const arcSize=Math.PI/2;
+    for(let j=0;j<4;j++){
+      cx.beginPath();cx.arc(0,0,o.r,o.angle+j*arcSize*2-0.05,o.angle+j*arcSize*2+arcSize+0.05);
+      cx.lineWidth=12;cx.strokeStyle=COLORS[j];cx.lineCap='round';cx.stroke()
+    }
+    cx.restore();
+    // Score check
+    if(!o.scored&&ball.y<o.y-o.r){o.scored=true;score++;document.getElementById('scV').textContent=score;playTone(523,60,'sine',0.2)}
+    // Collision check
+    const dist=Math.sqrt((ball.x-W/2)**2+(ball.y-o.y)**2);
+    if(Math.abs(dist-o.r)<14){
+      // Which segment?
+      const a=Math.atan2(ball.y-o.y,ball.x-W/2);
+      const na=((a-o.angle)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+      const seg=Math.floor(na/(Math.PI/2))%4;
+      if(seg!==ball.color){gameOver();return}
+    }
+  }
+  // Spawn more
+  const highest=Math.min(...obstacles.filter(o=>!o.type).map(o=>o.y),ball.y);
+  if(highest>ball.y-H){spawnObs(highest-250)}
+  // Draw ball
+  const by=ball.y-camY;
+  cx.beginPath();cx.arc(ball.x,by,ball.r,0,Math.PI*2);
+  cx.fillStyle=COLORS[ball.color];cx.fill();cx.strokeStyle='white';cx.lineWidth=2;cx.stroke();
+  // Score display
+  cx.fillStyle='rgba(255,255,255,0.08)';cx.font='bold 72px system-ui';cx.textAlign='center';cx.fillText(score,W/2,H*0.15);
+  // Death check
+  if(by>H+50||by<-100){gameOver();return}
+  if(running)requestAnimationFrame(loop)
+}
+function gameOver(){
+  running=false;playTone(200,300,'sawtooth',0.2);if(navigator.vibrate)navigator.vibrate([100,50,100]);
+  const isNew=score>load('hs',0);if(isNew)save('hs',score);
+  const p=load('tg',0)+1;save('tg',p);
+  document.getElementById('hdr').style.display='none';document.getElementById('gameArea').style.display='none';
+  document.getElementById('ge').textContent=score>=20?'🏆':score>=10?'🌈':'😢';
+  document.getElementById('fScore').textContent=score;document.getElementById('fBest').textContent=Math.max(score,load('hs',0));
+  document.getElementById('newRec').classList.toggle('hidden',!isNew);document.getElementById('goScr').classList.remove('hidden')
+}
+const hs=load('hs',0),tg=load('tg',0);if(tg>0){document.getElementById('ss').style.display='grid';document.getElementById('sBest').textContent=hs;document.getElementById('sPlays').textContent=tg}
+</script></body></html>

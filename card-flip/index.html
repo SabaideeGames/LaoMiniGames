@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="lo"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>ໄພ່ສອງໃບ — Card Flip</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}:root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--danger:#ef4444;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif}body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+.bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}.bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}@supports(padding:env(safe-area-inset-top)){.header{padding-top:calc(12px + env(safe-area-inset-top))}}.title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}.back{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.info{display:flex;gap:8px;font-size:0.85rem;font-weight:600}.pill{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:999px;padding:4px 12px}
+.area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:16px}
+.cards{display:grid;gap:8px;width:100%;max-width:360px}
+.card{aspect-ratio:0.75;border-radius:12px;cursor:pointer;perspective:600px;touch-action:manipulation}
+.card-inner{width:100%;height:100%;position:relative;transition:transform 0.4s;transform-style:preserve-3d}
+.card.flipped .card-inner{transform:rotateY(180deg)}
+.card.matched .card-inner{transform:rotateY(180deg)}
+.card-face{position:absolute;inset:0;border-radius:12px;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.card-back{background:var(--accent-grad);border:2px solid rgba(255,255,255,0.2);font-size:1.5rem}
+.card-front{background:var(--bg-glass);border:2px solid var(--border-glass);transform:rotateY(180deg);font-size:2rem}
+.card.matched .card-front{border-color:var(--success);background:rgba(16,185,129,0.1)}
+.timer-bar{width:100%;max-width:360px;height:8px;background:var(--bg-glass);border-radius:999px;overflow:hidden;border:1px solid var(--border-glass)}
+.timer-fill{height:100%;background:var(--accent-grad);border-radius:999px;transition:width 0.1s}
+.timer-fill.low{background:linear-gradient(135deg,#f59e0b,#ef4444)}
+.overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s}.ov-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}.ov-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}.si{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}.sv{font-size:1.8rem;font-weight:700}.sl{font-size:0.7rem;color:var(--text2);margin-top:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}.btn:active{transform:scale(0.96)}.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+.lvl-btns{display:flex;gap:8px;margin-bottom:16px}.lvl-btn{padding:8px 16px;border-radius:999px;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text2);font-size:0.8rem;font-weight:600;cursor:pointer;font-family:var(--font)}.lvl-btn.active{background:var(--accent-grad);color:white;border-color:transparent}
+.sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+</style></head><body><div class="bg-dec"></div>
+<div class="overlay" id="startScr"><div class="ov-emoji">🃏</div><div class="ov-title">ໄພ່ສອງໃບ</div><div class="ov-sub">ພິກໄພ່ — ຈັບຄູ່ໃຫ້ໝົດ!</div>
+<div class="lvl-btns"><button class="lvl-btn active" data-p="8" onclick="setPairs(8)">4×4</button><button class="lvl-btn" data-p="12" onclick="setPairs(12)">4×6</button><button class="lvl-btn" data-p="15" onclick="setPairs(15)">5×6</button></div>
+<div class="btn-group"><button class="btn btn-primary" onclick="startGame()">🃏 ເລີ່ມ</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="overlay hidden" id="winScr"><div class="ov-emoji">🎉</div><div class="ov-title">ສຳເລັດ!</div>
+<div class="sg"><div class="si"><div class="sv" id="fMoves">0</div><div class="sl">ການພິກ</div></div><div class="si"><div class="sv" id="fTime">0s</div><div class="sl">ເວລາ</div></div></div>
+<div class="btn-group"><button class="btn btn-primary" onclick="startGame()">🔄 ດ່ານໃໝ່</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="overlay hidden" id="goScr"><div class="ov-emoji">😢</div><div class="ov-title">ໝົດເວລາ!</div>
+<div class="btn-group"><button class="btn btn-primary" onclick="startGame()">🔄 ລອງໃໝ່</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="header" id="hdr" style="display:none"><a href="../index.html" class="back">←</a><div class="title"><span>🃏</span><span>ໄພ່ສອງໃບ</span></div><div class="info"><div class="pill" id="movesInfo">0 ພິກ</div><div class="pill" id="pairsInfo">0/8</div></div></div>
+<div class="area" id="ga" style="display:none">
+  <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+  <div class="cards" id="cards"></div>
+</div>
+<button class="sound-btn" id="snd" onclick="sndOn=!sndOn;this.textContent=sndOn?'🔊':'🔇'">🔊</button>
+<script>
+const GID='card-flip';
+const ALL_EMOJI=['🍎','🍊','🍋','🍇','🍓','🍑','🥝','🍒','🫐','🍌','🥭','🍍','🍕','🍔','🌮','🍣','🎮','⚽','🏀','🎸'];
+let numPairs=8,cards=[],flipped=[],matched=0,moves=0,timer=60,timerMax=60,timerInt,active=false,sndOn=true,ac=null;
+function save(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function load(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
+function playTone(f,d,t='sine',v=0.2){if(!sndOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+(function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+function setPairs(p){numPairs=p;document.querySelectorAll('.lvl-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.p)===p))}
+function startGame(){
+  document.querySelectorAll('.overlay').forEach(o=>o.classList.add('hidden'));document.getElementById('hdr').style.display='flex';document.getElementById('ga').style.display='flex';
+  const emojis=ALL_EMOJI.slice(0,numPairs);cards=[...emojis,...emojis].sort(()=>Math.random()-0.5);
+  flipped=[];matched=0;moves=0;timer=timerMax;active=true;
+  const cols=numPairs<=8?4:numPairs<=12?4:5;
+  document.getElementById('cards').style.gridTemplateColumns=`repeat(${cols},1fr)`;
+  document.getElementById('movesInfo').textContent='0 ພິກ';document.getElementById('pairsInfo').textContent=`0/${numPairs}`;
+  renderCards();updateTimer();
+  clearInterval(timerInt);timerInt=setInterval(()=>{timer-=0.1;updateTimer();if(timer<=0){active=false;clearInterval(timerInt);
+    document.getElementById('hdr').style.display='none';document.getElementById('ga').style.display='none';document.getElementById('goScr').classList.remove('hidden')}},100)
+}
+function updateTimer(){const pct=timer/timerMax*100;const f=document.getElementById('timerFill');f.style.width=pct+'%';f.className='timer-fill'+(pct<30?' low':'')}
+function renderCards(){
+  const c=document.getElementById('cards');c.innerHTML='';
+  cards.forEach((emoji,i)=>{
+    const d=document.createElement('div');
+    d.className='card'+(flipped.includes(i)?' flipped':'');
+    if(typeof emoji==='object'&&emoji.matched)d.className='card matched';
+    d.innerHTML=`<div class="card-inner"><div class="card-face card-back">❓</div><div class="card-face card-front">${typeof emoji==='object'?emoji.v:emoji}</div></div>`;
+    d.onclick=()=>flipCard(i);c.appendChild(d)
+  })
+}
+function flipCard(i){
+  if(!active||flipped.includes(i)||flipped.length>=2)return;
+  if(typeof cards[i]==='object'&&cards[i].matched)return;
+  flipped.push(i);moves++;document.getElementById('movesInfo').textContent=moves+' ພິກ';
+  playTone(400,40,'sine',0.1);renderCards();
+  if(flipped.length===2){
+    const v1=typeof cards[flipped[0]]==='object'?cards[flipped[0]].v:cards[flipped[0]];
+    const v2=typeof cards[flipped[1]]==='object'?cards[flipped[1]].v:cards[flipped[1]];
+    if(v1===v2){
+      cards[flipped[0]]={v:v1,matched:true};cards[flipped[1]]={v:v2,matched:true};
+      matched++;document.getElementById('pairsInfo').textContent=`${matched}/${numPairs}`;
+      playTone(523,80,'sine',0.25);setTimeout(()=>playTone(659,80,'sine',0.25),80);
+      if(navigator.vibrate)navigator.vibrate(30);flipped=[];renderCards();
+      if(matched===numPairs){active=false;clearInterval(timerInt);
+        playTone(784,150,'sine',0.3);
+        setTimeout(()=>{document.getElementById('hdr').style.display='none';document.getElementById('ga').style.display='none';
+          document.getElementById('fMoves').textContent=moves;document.getElementById('fTime').textContent=Math.round(timerMax-timer)+'s';
+          document.getElementById('winScr').classList.remove('hidden')},500)}
+    } else {
+      playTone(200,100,'square',0.1);setTimeout(()=>{flipped=[];renderCards()},600)
+    }
+  }
+}
+</script></body></html>

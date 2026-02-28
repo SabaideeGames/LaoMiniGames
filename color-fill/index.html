@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ລະບາຍສີ — Color Fill</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+    :root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--danger:#ef4444;--font:'Noto Sans Lao','Phetsarath OT','Saysettha OT',system-ui,sans-serif}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+    .bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}
+    .bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+    .game-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}
+    @supports(padding:env(safe-area-inset-top)){.game-header{padding-top:calc(12px + env(safe-area-inset-top))}}
+    .game-title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+    .back-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+    .info-bar{display:flex;gap:8px;font-size:0.85rem;font-weight:600}
+    .info-pill{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:999px;padding:4px 12px}
+    .game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:16px}
+    .board{display:grid;gap:2px;border-radius:12px;overflow:hidden;border:2px solid var(--border-glass)}
+    .cell{transition:background-color 0.15s}
+    .color-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:8px}
+    .color-btn{width:50px;height:50px;border-radius:14px;border:3px solid transparent;cursor:pointer;transition:all 0.2s;touch-action:manipulation}
+    .color-btn:active{transform:scale(0.9)}
+    .color-btn.active{border-color:white;box-shadow:0 0 15px rgba(255,255,255,0.3);transform:scale(1.1)}
+    .overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}
+    .overlay.hidden{opacity:0;pointer-events:none}
+    .overlay-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s ease}
+    .overlay-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}
+    .overlay-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}
+    @keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+    .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}
+    .stat-item{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}
+    .stat-value{font-size:1.8rem;font-weight:700;line-height:1.2}.stat-label{font-size:0.7rem;color:var(--text2);margin-top:4px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}
+    .btn:active{transform:scale(0.96)}
+    .btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}
+    .btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}
+    .btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+    .level-btns{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;justify-content:center}
+    .level-btn{padding:8px 16px;border-radius:999px;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text2);font-size:0.8rem;font-weight:600;cursor:pointer;font-family:var(--font);transition:all 0.2s}
+    .level-btn.active{background:var(--accent-grad);color:white;border-color:transparent}
+    .sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+  </style>
+</head>
+<body>
+  <div class="bg-dec"></div>
+  <div class="overlay" id="startScreen">
+    <div class="overlay-emoji">🎨</div>
+    <div class="overlay-title">ລະບາຍສີ</div>
+    <div class="overlay-sub">ເລືອກສີເພື່ອລະບາຍໃຫ້ເຕັມ!</div>
+    <div class="level-btns">
+      <button class="level-btn active" data-size="6" onclick="setSize(6)">6×6</button>
+      <button class="level-btn" data-size="8" onclick="setSize(8)">8×8</button>
+      <button class="level-btn" data-size="10" onclick="setSize(10)">10×10</button>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startGame()">🎨 ເລີ່ມ</button>
+      <a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a>
+    </div>
+  </div>
+  <div class="overlay hidden" id="winScreen">
+    <div class="overlay-emoji">🎉</div>
+    <div class="overlay-title">ສຳເລັດ!</div>
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-value" id="finalMoves">0</div><div class="stat-label">ການເຄື່ອນ</div></div>
+      <div class="stat-item"><div class="stat-value" id="finalMax">0</div><div class="stat-label">ຈຳກັດ</div></div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startGame()">🔄 ດ່ານໃໝ່</button>
+      <a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a>
+    </div>
+  </div>
+  <div class="overlay hidden" id="loseScreen">
+    <div class="overlay-emoji">😢</div>
+    <div class="overlay-title">ໝົດການເຄື່ອນ!</div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startGame()">🔄 ລອງໃໝ່</button>
+      <a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a>
+    </div>
+  </div>
+  <div class="game-header" id="gameHeader" style="display:none">
+    <a href="../index.html" class="back-btn">←</a>
+    <div class="game-title"><span>🎨</span><span>ລະບາຍສີ</span></div>
+    <div class="info-bar"><div class="info-pill" id="moveInfo">0/20</div><div class="info-pill" id="pctInfo">0%</div></div>
+  </div>
+  <div class="game-area" id="gameArea" style="display:none">
+    <div class="board" id="board"></div>
+    <div class="color-btns" id="colorBtns"></div>
+  </div>
+  <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+  <script>
+    const GAME_ID='color-fill';
+    const PAL=['#EF4444','#3B82F6','#22C55E','#F59E0B','#8B5CF6','#EC4899'];
+    let gs=6,maxM=20,moves=0,grid=[],owned=new Set(),active=false;
+    let soundOn=true,ac=null;
+    function save(k,v){try{localStorage.setItem(`game_${GAME_ID}_${k}`,JSON.stringify(v))}catch(e){}}
+    function load(k,d=null){try{const r=localStorage.getItem(`game_${GAME_ID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+    function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
+    function playTone(f,d,t='sine',v=0.2){if(!soundOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+    (function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+    function toggleSound(){soundOn=!soundOn;document.getElementById('soundBtn').textContent=soundOn?'🔊':'🔇'}
+    function setSize(s){gs=s;maxM={6:20,8:28,10:35}[s]||20;document.querySelectorAll('.level-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.size)===s))}
+    function flood(r,c,col){if(r<0||r>=gs||c<0||c>=gs)return;const k=r*gs+c;if(owned.has(k)||grid[r][c]!==col)return;owned.add(k);flood(r-1,c,col);flood(r+1,c,col);flood(r,c-1,col);flood(r,c+1,col)}
+    function startGame(){
+      document.querySelectorAll('.overlay').forEach(o=>o.classList.add('hidden'));
+      document.getElementById('gameHeader').style.display='flex';document.getElementById('gameArea').style.display='flex';
+      moves=0;active=true;grid=[];owned=new Set();
+      for(let r=0;r<gs;r++){grid[r]=[];for(let c=0;c<gs;c++)grid[r][c]=Math.floor(Math.random()*PAL.length)}
+      flood(0,0,grid[0][0]);render();updateInfo()
+    }
+    function pick(ci){
+      if(!active||ci===grid[0][0])return;moves++;
+      owned.forEach(k=>{const r=Math.floor(k/gs),c=k%gs;grid[r][c]=ci});
+      let ch=true;while(ch){ch=false;const add=[];owned.forEach(k=>{const r=Math.floor(k/gs),c=k%gs;[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([nr,nc])=>{if(nr>=0&&nr<gs&&nc>=0&&nc<gs){const nk=nr*gs+nc;if(!owned.has(nk)&&grid[nr][nc]===ci)add.push(nk)}})});add.forEach(k=>{owned.add(k);ch=true})}
+      playTone(400+owned.size*3,60,'sine',0.15);render();updateInfo();
+      if(owned.size===gs*gs){active=false;playTone(523,100,'sine',0.3);setTimeout(()=>{document.getElementById('gameHeader').style.display='none';document.getElementById('gameArea').style.display='none';document.getElementById('finalMoves').textContent=moves;document.getElementById('finalMax').textContent=maxM;document.getElementById('winScreen').classList.remove('hidden')},400)}
+      else if(moves>=maxM){active=false;playTone(200,300,'sawtooth',0.15);setTimeout(()=>{document.getElementById('gameHeader').style.display='none';document.getElementById('gameArea').style.display='none';document.getElementById('loseScreen').classList.remove('hidden')},400)}
+    }
+    function render(){
+      const b=document.getElementById('board');const cs=Math.min(Math.floor((Math.min(window.innerWidth,420)-40)/gs),50);
+      b.style.gridTemplateColumns=`repeat(${gs},${cs}px)`;b.innerHTML='';
+      for(let r=0;r<gs;r++)for(let c=0;c<gs;c++){const d=document.createElement('div');d.className='cell';d.style.cssText=`width:${cs}px;height:${cs}px;background:${PAL[grid[r][c]]}`;b.appendChild(d)}
+      const cb=document.getElementById('colorBtns');cb.innerHTML='';
+      PAL.forEach((col,i)=>{const btn=document.createElement('button');btn.className='color-btn'+(i===grid[0][0]?' active':'');btn.style.background=col;btn.onclick=()=>pick(i);cb.appendChild(btn)})
+    }
+    function updateInfo(){document.getElementById('moveInfo').textContent=`${moves}/${maxM}`;document.getElementById('pctInfo').textContent=Math.round(owned.size/(gs*gs)*100)+'%'}
+  </script>
+</body>
+</html>

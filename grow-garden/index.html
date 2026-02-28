@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="lo"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>ສວນນ້ອຍ — Grow Garden</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}:root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif}body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+.bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}.bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}@supports(padding:env(safe-area-inset-top)){.header{padding-top:calc(12px + env(safe-area-inset-top))}}.title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}.back{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.coins-display{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:6px}
+.area{flex:1;display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.garden-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:320px}
+.plot{aspect-ratio:1;border-radius:16px;background:var(--bg-glass);border:2px solid var(--border-glass);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation;position:relative;overflow:hidden}
+.plot:active{transform:scale(0.96)}
+.plot-emoji{font-size:2.5rem;transition:all 0.3s}
+.plot-bar{width:70%;height:6px;border-radius:3px;background:rgba(255,255,255,0.1);overflow:hidden;margin-top:4px}
+.plot-fill{height:100%;border-radius:3px;background:var(--success);transition:width 0.3s}
+.plot-label{font-size:0.6rem;color:var(--text2);margin-top:2px}
+.plot.locked{opacity:0.3}
+.plot.ready .plot-emoji{animation:bounce 0.5s ease infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.shop{display:flex;flex-direction:column;gap:8px;width:100%;max-width:320px}
+.shop-title{font-size:0.85rem;font-weight:600;color:var(--text2);text-align:center}
+.seed{display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px;cursor:pointer;transition:all 0.15s}
+.seed:active{transform:scale(0.98)}.seed.locked{opacity:0.4;pointer-events:none}
+.seed-icon{font-size:1.5rem;width:36px;text-align:center}
+.seed-info{flex:1}.seed-name{font-size:0.85rem;font-weight:600}.seed-desc{font-size:0.65rem;color:var(--text2)}
+.seed-cost{font-size:0.8rem;font-weight:700;color:var(--success)}
+.overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s}.ov-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}.ov-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}.btn:active{transform:scale(0.96)}.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+.sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+</style></head><body><div class="bg-dec"></div>
+<div class="overlay" id="startScr"><div class="ov-emoji">🌱</div><div class="ov-title">ສວນນ້ອຍ</div><div class="ov-sub">ປູກ, ລົດນ້ຳ, ເກັບກ່ຽວ!</div>
+<div class="btn-group"><button class="btn btn-primary" onclick="init()">🌱 ເລີ່ມ</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="header" id="hdr" style="display:none"><a href="../index.html" class="back">←</a><div class="title"><span>🌱</span><span>ສວນນ້ອຍ</span></div><div class="coins-display">🪙 <span id="coinVal">0</span></div></div>
+<div class="area" id="ga" style="display:none">
+  <div class="garden-grid" id="garden"></div>
+  <div class="shop" id="shop"><div class="shop-title">🌱 ເມັດ</div></div>
+</div>
+<button class="sound-btn" id="snd" onclick="sndOn=!sndOn;this.textContent=sndOn?'🔊':'🔇'">🔊</button>
+<script>
+const GID='grow-garden';
+const SEEDS=[
+  {id:'sunflower',name:'ດອກຕາເວັນ',icon:'🌻',stages:['🌱','🌿','🌻'],growTime:10,value:5,cost:0},
+  {id:'rose',name:'ກຸຫຼາບ',icon:'🌹',stages:['🌱','🌿','🌷','🌹'],growTime:20,value:15,cost:10},
+  {id:'tulip',name:'ທິວລິບ',icon:'🌷',stages:['🌱','🌿','🌷'],growTime:15,value:10,cost:5},
+  {id:'cherry',name:'ໝາກເຊີຣີ',icon:'🍒',stages:['🌱','🌿','🌳','🍒'],growTime:40,value:30,cost:25},
+  {id:'cactus',name:'ກະບອງເພັດ',icon:'🌵',stages:['🌱','🌵'],growTime:30,value:20,cost:15},
+  {id:'tree',name:'ຕົ້ນໄມ້ໃຫຍ່',icon:'🌳',stages:['🌱','🌿','🌲','🌳'],growTime:60,value:50,cost:40},
+];
+let coins=0,plots=[],selectedSeed=0,sndOn=true,ac=null;
+function save(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function load(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function saveAll(){save('coins',coins);save('plots',plots.map(p=>({seedId:p.seedId,progress:p.progress,planted:p.planted})));save('lastTime',Date.now())}
+function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
+function playTone(f,d,t='sine',v=0.2){if(!sndOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+(function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+
+function plotAction(i){
+  const p=plots[i];
+  if(i>=6+Math.floor(coins/50)){return}// Locked
+  if(!p.seedId){
+    // Plant
+    const seed=SEEDS[selectedSeed];
+    if(coins<seed.cost)return;
+    coins-=seed.cost;p.seedId=seed.id;p.progress=0;p.planted=Date.now();
+    playTone(400,60,'sine',0.15);if(navigator.vibrate)navigator.vibrate(20)
+  } else if(p.progress>=1){
+    // Harvest
+    const seed=SEEDS.find(s=>s.id===p.seedId);
+    coins+=seed.value;p.seedId=null;p.progress=0;p.planted=0;
+    playTone(523,80,'sine',0.25);setTimeout(()=>playTone(659,80,'sine',0.25),80);
+    if(navigator.vibrate)navigator.vibrate(30)
+  } else {
+    // Water (speed up)
+    p.progress=Math.min(p.progress+0.1,1);
+    playTone(600,40,'sine',0.1)
+  }
+  saveAll();render()
+}
+
+function render(){
+  document.getElementById('coinVal').textContent=coins;
+  const g=document.getElementById('garden');g.innerHTML='';
+  const unlocked=Math.min(9,6+Math.floor(coins/50));
+  for(let i=0;i<9;i++){
+    const d=document.createElement('div');
+    if(i>=unlocked){d.className='plot locked';d.innerHTML=`<div class="plot-emoji">🔒</div><div class="plot-label">🪙${(i-5)*50}</div>`;g.appendChild(d);continue}
+    const p=plots[i];d.className='plot'+(p.progress>=1?' ready':'');d.onclick=()=>plotAction(i);
+    if(!p.seedId){d.innerHTML='<div class="plot-emoji">➕</div><div class="plot-label">ປູກ</div>'}
+    else{
+      const seed=SEEDS.find(s=>s.id===p.seedId);
+      const stageIdx=Math.min(Math.floor(p.progress*seed.stages.length),seed.stages.length-1);
+      d.innerHTML=`<div class="plot-emoji">${seed.stages[stageIdx]}</div><div class="plot-bar"><div class="plot-fill" style="width:${p.progress*100}%"></div></div><div class="plot-label">${p.progress>=1?'ເກັບກ່ຽວ!':Math.round(p.progress*100)+'%'}</div>`
+    }
+    g.appendChild(d)
+  }
+  // Shop
+  const shop=document.getElementById('shop');shop.innerHTML='<div class="shop-title">🌱 ເລືອກເມັດ</div>';
+  SEEDS.forEach((s,i)=>{
+    const d=document.createElement('div');d.className='seed'+(coins<s.cost&&s.cost>0?' locked':'')+(selectedSeed===i?' selected':'');
+    d.style.borderColor=selectedSeed===i?'var(--accent)':'var(--border-glass)';
+    d.onclick=()=>{selectedSeed=i;render()};
+    d.innerHTML=`<div class="seed-icon">${s.icon}</div><div class="seed-info"><div class="seed-name">${s.name}</div><div class="seed-desc">${s.growTime}ວິ → 🪙${s.value}</div></div><div class="seed-cost">${s.cost?'🪙'+s.cost:'ຟຣີ'}</div>`;
+    shop.appendChild(d)
+  })
+}
+
+function growTick(){
+  plots.forEach(p=>{
+    if(!p.seedId||p.progress>=1)return;
+    const seed=SEEDS.find(s=>s.id===p.seedId);
+    p.progress=Math.min(p.progress+1/(seed.growTime*2),1)// Tick every 500ms
+  });
+  render();saveAll()
+}
+
+function init(){
+  document.getElementById('startScr').classList.add('hidden');document.getElementById('hdr').style.display='flex';document.getElementById('ga').style.display='flex';
+  coins=load('coins',0);
+  const savedPlots=load('plots',[]);
+  plots=Array.from({length:9},(_,i)=>savedPlots[i]||{seedId:null,progress:0,planted:0});
+  // Offline growth
+  const lastTime=load('lastTime',Date.now());const elapsed=(Date.now()-lastTime)/1000;
+  plots.forEach(p=>{if(p.seedId&&p.progress<1){const seed=SEEDS.find(s=>s.id===p.seedId);p.progress=Math.min(p.progress+elapsed/seed.growTime,1)}});
+  render();setInterval(growTick,500)
+}
+</script></body></html>

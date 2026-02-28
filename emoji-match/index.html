@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ຈັບຄູ່ Emoji — Emoji Match</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+    :root{--bg:#0f0f1a;--bg2:#1a1a2e;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--text3:#6b6b80;--accent:#7C3AED;--accent2:#2563EB;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--font:'Noto Sans Lao','Phetsarath OT','Saysettha OT',system-ui,sans-serif}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+    .bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}
+    .bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+
+    .game-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}
+    @supports(padding:env(safe-area-inset-top)){.game-header{padding-top:calc(12px + env(safe-area-inset-top))}}
+    .game-title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+    .back-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+    .header-scores{display:flex;gap:16px;align-items:center}
+    .header-score{text-align:center}
+    .header-score-label{font-size:0.65rem;color:var(--text2);letter-spacing:0.05em}
+    .header-score-value{font-size:1.1rem;font-weight:700}
+    .header-score-value.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+    .game-container{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:16px}
+
+    .timer-bar{width:100%;max-width:360px;height:8px;background:var(--bg-glass);border-radius:999px;overflow:hidden;border:1px solid var(--border-glass)}
+    .timer-fill{height:100%;background:var(--accent-grad);border-radius:999px;transition:width 0.1s linear;width:100%}
+    .timer-fill.warning{background:linear-gradient(135deg,#f59e0b,#ef4444)}
+    .timer-fill.danger{background:#ef4444}
+
+    .emoji-display{display:flex;gap:24px;align-items:center;justify-content:center;min-height:140px}
+    .emoji-item{font-size:5rem;transition:transform 0.2s;animation:popIn 0.3s ease}
+    @keyframes popIn{0%{transform:scale(0);opacity:0}50%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+
+    .rule-badge{font-size:0.85rem;font-weight:600;padding:6px 16px;border-radius:999px;background:rgba(124,58,237,0.15);color:var(--accent);animation:fadeIn 0.3s ease}
+    .rule-badge.reversed{background:rgba(239,68,68,0.15);color:var(--danger)}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+
+    .answer-btns{display:flex;gap:16px;width:100%;max-width:360px}
+    .answer-btn{flex:1;padding:24px;border:2px solid var(--border-glass);border-radius:20px;background:var(--bg-glass);font-size:2rem;cursor:pointer;transition:all 0.15s;font-family:var(--font);touch-action:manipulation;display:flex;flex-direction:column;align-items:center;gap:4px}
+    .answer-btn:active{transform:scale(0.94)}
+    .answer-btn .label{font-size:0.75rem;color:var(--text2);font-weight:600}
+    .answer-btn.correct{border-color:var(--success);background:rgba(16,185,129,0.15);box-shadow:0 0 20px rgba(16,185,129,0.3)}
+    .answer-btn.wrong{border-color:var(--danger);background:rgba(239,68,68,0.15);box-shadow:0 0 20px rgba(239,68,68,0.3)}
+
+    .score-display{font-size:3rem;font-weight:800;background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .streak-display{font-size:0.9rem;color:var(--text2)}
+    .flash-correct{animation:flashGreen 0.3s ease}
+    .flash-wrong{animation:flashRed 0.3s ease}
+    @keyframes flashGreen{0%,100%{background:transparent}50%{background:rgba(16,185,129,0.1)}}
+    @keyframes flashRed{0%,100%{background:transparent}50%{background:rgba(239,68,68,0.1)}}
+
+    .overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}
+    .overlay.hidden{opacity:0;pointer-events:none}
+    .overlay-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s ease}
+    .overlay-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}
+    .overlay-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}
+    @keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+    .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}
+    .stat-item{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}
+    .stat-value{font-size:1.8rem;font-weight:700;line-height:1.2}
+    .stat-label{font-size:0.7rem;color:var(--text2);margin-top:4px}
+    .new-record{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:999px;font-size:0.8rem;font-weight:600;background:rgba(16,185,129,0.15);color:var(--success);margin-bottom:20px;animation:scaleIn 0.4s ease 0.3s both}
+    @keyframes scaleIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}
+
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}
+    .btn:active{transform:scale(0.96)}
+    .btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}
+    .btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}
+    .btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+
+    .sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+    @supports(padding:env(safe-area-inset-top)){.sound-btn{top:calc(12px + env(safe-area-inset-top))}}
+  </style>
+</head>
+<body>
+  <div class="bg-dec"></div>
+
+  <div class="overlay" id="startScreen">
+    <div class="overlay-emoji">😎</div>
+    <div class="overlay-title">ຈັບຄູ່ Emoji</div>
+    <div class="overlay-sub">ເບິ່ງ 2 emoji — ກົດຖືກຫຼືຜິດ, ໃຫ້ໄວ!</div>
+    <div class="stats-grid" id="startStats" style="display:none">
+      <div class="stat-item"><div class="stat-value" id="startBest">0</div><div class="stat-label">ຄະແນນສູງສຸດ</div></div>
+      <div class="stat-item"><div class="stat-value" id="startPlays">0</div><div class="stat-label">ຫຼິ້ນແລ້ວ</div></div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startGame()">😎 ເລີ່ມຫຼິ້ນ</button>
+      <a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="gameOverScreen">
+    <div class="overlay-emoji" id="goEmoji">😢</div>
+    <div class="overlay-title">ຈົບເກມ</div>
+    <div class="new-record hidden" id="newRecord">🏆 ສະຖິຕິໃໝ່!</div>
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-value" id="finalScore">0</div><div class="stat-label">ຄະແນນ</div></div>
+      <div class="stat-item"><div class="stat-value best" id="finalBest" style="background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">0</div><div class="stat-label">ດີທີ່ສຸດ</div></div>
+      <div class="stat-item"><div class="stat-value" id="finalStreak">0</div><div class="stat-label">ຄອມໂບ</div></div>
+      <div class="stat-item"><div class="stat-value" id="finalPlays">0</div><div class="stat-label">ຫຼິ້ນແລ້ວ</div></div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startGame()">🔄 ລອງໃໝ່</button>
+      <a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a>
+    </div>
+  </div>
+
+  <div class="game-header" id="gameUI" style="display:none">
+    <a href="../index.html" class="back-btn">←</a>
+    <div class="game-title"><span>😎</span><span>ຈັບຄູ່ Emoji</span></div>
+    <div class="header-scores">
+      <div class="header-score"><div class="header-score-label">ຄະແນນ</div><div class="header-score-value" id="scoreVal">0</div></div>
+      <div class="header-score"><div class="header-score-label">ດີທີ່ສຸດ</div><div class="header-score-value best" id="bestVal">0</div></div>
+    </div>
+  </div>
+
+  <div class="game-container" id="gameContainer" style="display:none">
+    <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+    <div class="rule-badge" id="ruleBadge">ກົງກັນ = ✅</div>
+    <div class="streak-display" id="streakDisplay">🔥 0 ຄອມໂບ</div>
+    <div class="emoji-display">
+      <div class="emoji-item" id="emoji1">😀</div>
+      <div class="emoji-item" id="emoji2">😀</div>
+    </div>
+    <div class="answer-btns">
+      <button class="answer-btn" id="btnSame" onclick="answer(true)"><span>✅</span><span class="label">ກົງກັນ</span></button>
+      <button class="answer-btn" id="btnDiff" onclick="answer(false)"><span>❌</span><span class="label">ຕ່າງກັນ</span></button>
+    </div>
+  </div>
+
+  <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+  <script>
+    const GAME_ID='emoji-match';
+    const EMOJIS=['😀','😂','🥹','😍','🤩','😎','🥳','😤','😱','🤯','🥶','🤮','👻','💀','👽','🤖','🎃','😺','🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🦆','🦅','🦉','🐴','🦄','🐝','🐛','🦋','🐌','🐞','🍎','🍊','🍋','🍇','🍓','🍑','🍒','🥝','🍕','🍔','🌮','🍣','🎮','⚽','🏀','🎾','🎸','🎺','🎨','🚀','✈️','🚗','🏠','⭐','🌈','🔥','💎','🎯','🎪'];
+    let score=0,bestStreak=0,streak=0,timer=30,timerMax=30,gameRunning=false,reversed=false,timerInterval=null;
+    let soundEnabled=true,audioCtx=null;
+
+    function save(k,v){try{localStorage.setItem(`game_${GAME_ID}_${k}`,JSON.stringify(v))}catch(e){}}
+    function load(k,d=null){try{const r=localStorage.getItem(`game_${GAME_ID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+
+    function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume()}
+    function playTone(f,d,t='sine',v=0.2){if(!soundEnabled||!audioCtx)return;try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+d/1000);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d/1000)}catch(e){}}
+    function playCorrect(){playTone(523,60,'sine',0.25);setTimeout(()=>playTone(659,80,'sine',0.25),60)}
+    function playWrong(){playTone(200,200,'sawtooth',0.15)}
+
+    (function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('touchend',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('touchend',u,true);document.addEventListener('click',u,true)})();
+
+    function toggleSound(){soundEnabled=!soundEnabled;document.getElementById('soundBtn').textContent=soundEnabled?'🔊':'🔇'}
+
+    function startGame(){
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('gameOverScreen').classList.add('hidden');
+      document.getElementById('gameUI').style.display='flex';
+      document.getElementById('gameContainer').style.display='flex';
+      score=0;streak=0;bestStreak=0;timer=timerMax;reversed=false;gameRunning=true;
+      document.getElementById('scoreVal').textContent='0';
+      document.getElementById('bestVal').textContent=load('highScore',0);
+      updateTimer();
+      nextRound();
+      clearInterval(timerInterval);
+      timerInterval=setInterval(()=>{
+        if(!gameRunning)return;
+        timer-=0.1;
+        updateTimer();
+        if(timer<=0){timer=0;updateTimer();gameOver()}
+      },100);
+    }
+
+    function updateTimer(){
+      const pct=(timer/timerMax)*100;
+      const fill=document.getElementById('timerFill');
+      fill.style.width=pct+'%';
+      fill.className='timer-fill'+(pct<20?' danger':pct<40?' warning':'');
+    }
+
+    function nextRound(){
+      if(!gameRunning)return;
+      // Rule switch every 20 rounds
+      if(score>0&&score%20===0){
+        reversed=!reversed;
+      }
+      const badge=document.getElementById('ruleBadge');
+      badge.textContent=reversed?'ກົງກັນ = ❌ (ກັບກັນ!)':'ກົງກັນ = ✅';
+      badge.className='rule-badge'+(reversed?' reversed':'');
+
+      const same=Math.random()<0.5;
+      const e1=EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+      let e2=same?e1:EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+      while(!same&&e2===e1)e2=EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+
+      document.getElementById('emoji1').textContent=e1;
+      document.getElementById('emoji2').textContent=e2;
+      // Re-trigger animation
+      ['emoji1','emoji2'].forEach(id=>{
+        const el=document.getElementById(id);
+        el.style.animation='none';
+        el.offsetHeight;
+        el.style.animation='popIn 0.3s ease';
+      });
+      document.getElementById('btnSame').className='answer-btn';
+      document.getElementById('btnDiff').className='answer-btn';
+    }
+
+    function answer(samePressed){
+      if(!gameRunning)return;
+      const e1=document.getElementById('emoji1').textContent;
+      const e2=document.getElementById('emoji2').textContent;
+      const areSame=e1===e2;
+      let correct;
+      if(reversed){correct=(samePressed!==areSame)}
+      else{correct=(samePressed===areSame)}
+
+      if(correct){
+        score++;streak++;
+        if(streak>bestStreak)bestStreak=streak;
+        timer=Math.min(timer+2,timerMax);
+        playCorrect();
+        if(navigator.vibrate)navigator.vibrate(30);
+        document.getElementById(samePressed?'btnSame':'btnDiff').classList.add('correct');
+        document.getElementById('gameContainer').classList.add('flash-correct');
+        setTimeout(()=>document.getElementById('gameContainer').classList.remove('flash-correct'),300);
+      } else {
+        streak=0;
+        timer=Math.max(timer-3,0);
+        playWrong();
+        if(navigator.vibrate)navigator.vibrate([100,30,100]);
+        document.getElementById(samePressed?'btnSame':'btnDiff').classList.add('wrong');
+        document.getElementById('gameContainer').classList.add('flash-wrong');
+        setTimeout(()=>document.getElementById('gameContainer').classList.remove('flash-wrong'),300);
+      }
+      document.getElementById('scoreVal').textContent=score;
+      document.getElementById('streakDisplay').textContent=`🔥 ${streak} ຄອມໂບ`;
+      updateTimer();
+      setTimeout(nextRound,250);
+    }
+
+    function gameOver(){
+      gameRunning=false;
+      clearInterval(timerInterval);
+      const isNew=score>(load('highScore',0));
+      if(isNew)save('highScore',score);
+      const plays=(load('totalGames',0))+1;
+      save('totalGames',plays);
+
+      document.getElementById('gameUI').style.display='none';
+      document.getElementById('gameContainer').style.display='none';
+      document.getElementById('goEmoji').textContent=score>=30?'🏆':score>=15?'😎':'😢';
+      document.getElementById('finalScore').textContent=score;
+      document.getElementById('finalBest').textContent=Math.max(score,load('highScore',0));
+      document.getElementById('finalStreak').textContent=bestStreak;
+      document.getElementById('finalPlays').textContent=plays;
+      document.getElementById('newRecord').classList.toggle('hidden',!isNew);
+      document.getElementById('gameOverScreen').classList.remove('hidden');
+    }
+
+    // Start stats
+    const hs=load('highScore',0),tg=load('totalGames',0);
+    if(tg>0){document.getElementById('startStats').style.display='grid';document.getElementById('startBest').textContent=hs;document.getElementById('startPlays').textContent=tg}
+  </script>
+</body>
+</html>

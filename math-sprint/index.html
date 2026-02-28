@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ແຂ່ງຄິດໄລ່ — Math Sprint</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+    :root{--bg:#0f0f1a;--bg2:#1a1a2e;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--text3:#6b6b80;--accent:#7C3AED;--accent2:#2563EB;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--font:'Noto Sans Lao','Phetsarath OT','Saysettha OT',system-ui,sans-serif}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+    .bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}
+    .bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+
+    .game-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}
+    @supports(padding:env(safe-area-inset-top)){.game-header{padding-top:calc(12px + env(safe-area-inset-top))}}
+    .game-title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+    .back-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+    .header-scores{display:flex;gap:16px;align-items:center}
+    .header-score{text-align:center}
+    .header-score-label{font-size:0.65rem;color:var(--text2)}
+    .header-score-value{font-size:1.1rem;font-weight:700}
+    .header-score-value.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+    .game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:20px}
+
+    .timer-bar{width:100%;max-width:360px;height:10px;background:var(--bg-glass);border-radius:999px;overflow:hidden;border:1px solid var(--border-glass)}
+    .timer-fill{height:100%;background:var(--accent-grad);border-radius:999px;transition:width 0.1s linear}
+    .timer-fill.low{background:linear-gradient(135deg,#f59e0b,#ef4444)}
+    .timer-fill.critical{background:#ef4444}
+    .timer-text{font-size:0.85rem;color:var(--text2);font-weight:600}
+
+    .difficulty-badge{font-size:0.75rem;font-weight:600;padding:4px 14px;border-radius:999px;background:rgba(124,58,237,0.15);color:var(--accent)}
+
+    .question{font-size:3rem;font-weight:800;text-align:center;min-height:80px;display:flex;align-items:center;justify-content:center}
+    .question .op{color:var(--accent)}
+
+    .answers-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:340px}
+    .ans-btn{padding:20px;border:2px solid var(--border-glass);border-radius:16px;background:var(--bg-glass);font-size:1.5rem;font-weight:700;color:var(--text);cursor:pointer;transition:all 0.15s;font-family:var(--font);touch-action:manipulation;text-align:center}
+    .ans-btn:active{transform:scale(0.94)}
+    .ans-btn.correct{border-color:var(--success);background:rgba(16,185,129,0.15);color:var(--success)}
+    .ans-btn.wrong{border-color:var(--danger);background:rgba(239,68,68,0.15);color:var(--danger)}
+
+    .streak-info{display:flex;gap:16px;align-items:center}
+    .streak-pill{font-size:0.85rem;font-weight:600;padding:4px 12px;border-radius:999px;background:var(--bg-glass);border:1px solid var(--border-glass)}
+    .flash-correct{animation:flashG 0.3s}
+    .flash-wrong{animation:flashR 0.3s}
+    @keyframes flashG{0%,100%{background:transparent}50%{background:rgba(16,185,129,0.08)}}
+    @keyframes flashR{0%,100%{background:transparent}50%{background:rgba(239,68,68,0.08)}}
+
+    .overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}
+    .overlay.hidden{opacity:0;pointer-events:none}
+    .overlay-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s ease}
+    .overlay-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}
+    .overlay-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}
+    @keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+    .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}
+    .stat-item{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}
+    .stat-value{font-size:1.8rem;font-weight:700;line-height:1.2}
+    .stat-label{font-size:0.7rem;color:var(--text2);margin-top:4px}
+    .new-record{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:999px;font-size:0.8rem;font-weight:600;background:rgba(16,185,129,0.15);color:var(--success);margin-bottom:20px;animation:scaleIn 0.4s ease 0.3s both}
+    @keyframes scaleIn{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}
+
+    .diff-btns{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;justify-content:center}
+    .diff-btn{padding:8px 16px;border-radius:999px;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text2);font-size:0.8rem;font-weight:600;cursor:pointer;font-family:var(--font);transition:all 0.2s}
+    .diff-btn.active{background:var(--accent-grad);color:white;border-color:transparent;box-shadow:0 0 15px var(--glow)}
+
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}
+    .btn:active{transform:scale(0.96)}
+    .btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}
+    .btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}
+    .btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+
+    .sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+    @supports(padding:env(safe-area-inset-top)){.sound-btn{top:calc(12px + env(safe-area-inset-top))}}
+  </style>
+</head>
+<body>
+  <div class="bg-dec"></div>
+
+  <div class="overlay" id="startScreen">
+    <div class="overlay-emoji">🔢</div>
+    <div class="overlay-title">ແຂ່ງຄິດໄລ່</div>
+    <div class="overlay-sub">ຕອບຄິດໄລ່ໃຫ້ໄວ — ແຂ່ງກັບເວລາ!</div>
+    <div class="diff-btns">
+      <button class="diff-btn active" data-diff="easy" onclick="setDiff('easy')">ງ່າຍ +−</button>
+      <button class="diff-btn" data-diff="medium" onclick="setDiff('medium')">ກາງ ×÷</button>
+      <button class="diff-btn" data-diff="hard" onclick="setDiff('hard')">ຍາກ ປົນ</button>
+    </div>
+    <div class="stats-grid" id="startStats" style="display:none">
+      <div class="stat-item"><div class="stat-value" id="startBest">0</div><div class="stat-label">ຄະແນນສູງສຸດ</div></div>
+      <div class="stat-item"><div class="stat-value" id="startPlays">0</div><div class="stat-label">ຫຼິ້ນແລ້ວ</div></div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startGame()">🔢 ເລີ່ມຫຼິ້ນ</button>
+      <a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a>
+    </div>
+  </div>
+
+  <div class="overlay hidden" id="gameOverScreen">
+    <div class="overlay-emoji" id="goEmoji">😢</div>
+    <div class="overlay-title">ໝົດເວລາ!</div>
+    <div class="new-record hidden" id="newRecord">🏆 ສະຖິຕິໃໝ່!</div>
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-value" id="finalScore">0</div><div class="stat-label">ຄະແນນ</div></div>
+      <div class="stat-item"><div class="stat-value best" id="finalBest" style="background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">0</div><div class="stat-label">ດີທີ່ສຸດ</div></div>
+      <div class="stat-item"><div class="stat-value" id="finalStreak">0</div><div class="stat-label">ຄອມໂບສູງສຸດ</div></div>
+      <div class="stat-item"><div class="stat-value" id="finalAccuracy">0%</div><div class="stat-label">ຄວາມແມ່ນຍຳ</div></div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startGame()">🔄 ລອງໃໝ່</button>
+      <a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a>
+    </div>
+  </div>
+
+  <div class="game-header" id="gameUI" style="display:none">
+    <a href="../index.html" class="back-btn">←</a>
+    <div class="game-title"><span>🔢</span><span>ແຂ່ງຄິດໄລ່</span></div>
+    <div class="header-scores">
+      <div class="header-score"><div class="header-score-label">ຄະແນນ</div><div class="header-score-value" id="scoreVal">0</div></div>
+      <div class="header-score"><div class="header-score-label">ດີທີ່ສຸດ</div><div class="header-score-value best" id="bestVal">0</div></div>
+    </div>
+  </div>
+
+  <div class="game-area" id="gameArea" style="display:none">
+    <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+    <div class="timer-text" id="timerText">30.0s</div>
+    <div class="streak-info">
+      <div class="streak-pill" id="streakPill">🔥 0</div>
+      <div class="difficulty-badge" id="diffBadge">ງ່າຍ</div>
+    </div>
+    <div class="question" id="question">7 + 3 = ?</div>
+    <div class="answers-grid" id="answersGrid"></div>
+  </div>
+
+  <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+  <script>
+    const GAME_ID='math-sprint';
+    let difficulty='easy';
+    let score=0,streak=0,bestStreak=0,timer=30,timerMax=30,totalQ=0,correctQ=0;
+    let gameRunning=false,timerInterval=null,correctAnswer=0;
+    let soundEnabled=true,audioCtx=null;
+
+    function save(k,v){try{localStorage.setItem(`game_${GAME_ID}_${k}`,JSON.stringify(v))}catch(e){}}
+    function load(k,d=null){try{const r=localStorage.getItem(`game_${GAME_ID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+    function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume()}
+    function playTone(f,d,t='sine',v=0.2){if(!soundEnabled||!audioCtx)return;try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+d/1000);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d/1000)}catch(e){}}
+    (function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('touchend',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('touchend',u,true);document.addEventListener('click',u,true)})();
+    function toggleSound(){soundEnabled=!soundEnabled;document.getElementById('soundBtn').textContent=soundEnabled?'🔊':'🔇'}
+
+    function setDiff(d){
+      difficulty=d;
+      document.querySelectorAll('.diff-btn').forEach(b=>b.classList.toggle('active',b.dataset.diff===d));
+    }
+
+    function generateQuestion(){
+      let a,b,op,answer;
+      if(difficulty==='easy'){
+        op=Math.random()<0.5?'+':'-';
+        a=Math.floor(Math.random()*50)+1;
+        b=Math.floor(Math.random()*50)+1;
+        if(op==='-'&&b>a)[a,b]=[b,a];
+        answer=op==='+'?a+b:a-b;
+      } else if(difficulty==='medium'){
+        op=Math.random()<0.5?'×':'÷';
+        if(op==='×'){a=Math.floor(Math.random()*12)+2;b=Math.floor(Math.random()*12)+2;answer=a*b}
+        else{answer=Math.floor(Math.random()*12)+2;b=Math.floor(Math.random()*12)+2;a=answer*b;op='÷'}
+      } else {
+        const ops=['+','-','×','÷'];
+        op=ops[Math.floor(Math.random()*4)];
+        if(op==='+'){a=Math.floor(Math.random()*100)+1;b=Math.floor(Math.random()*100)+1;answer=a+b}
+        else if(op==='-'){a=Math.floor(Math.random()*100)+1;b=Math.floor(Math.random()*a)+1;answer=a-b}
+        else if(op==='×'){a=Math.floor(Math.random()*15)+2;b=Math.floor(Math.random()*15)+2;answer=a*b}
+        else{answer=Math.floor(Math.random()*15)+2;b=Math.floor(Math.random()*15)+2;a=answer*b;op='÷'}
+      }
+      correctAnswer=answer;
+      document.getElementById('question').innerHTML=`${a} <span class="op">${op}</span> ${b} = ?`;
+
+      // Generate 4 answer choices
+      const choices=new Set([answer]);
+      while(choices.size<4){
+        let wrong=answer+Math.floor(Math.random()*21)-10;
+        if(wrong!==answer&&wrong>=0)choices.add(wrong);
+      }
+      const arr=[...choices].sort(()=>Math.random()-0.5);
+      const grid=document.getElementById('answersGrid');
+      grid.innerHTML='';
+      arr.forEach(v=>{
+        const btn=document.createElement('button');
+        btn.className='ans-btn';
+        btn.textContent=v;
+        btn.onclick=()=>checkAnswer(v,btn);
+        grid.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(val,btn){
+      if(!gameRunning)return;
+      totalQ++;
+      const btns=document.querySelectorAll('.ans-btn');
+      if(val===correctAnswer){
+        score++;streak++;correctQ++;
+        if(streak>bestStreak)bestStreak=streak;
+        timer=Math.min(timer+2,timerMax);
+        btn.classList.add('correct');
+        playTone(523,60,'sine',0.25);setTimeout(()=>playTone(659,80,'sine',0.25),60);
+        if(navigator.vibrate)navigator.vibrate(30);
+        document.getElementById('gameArea').classList.add('flash-correct');
+        setTimeout(()=>document.getElementById('gameArea').classList.remove('flash-correct'),300);
+      } else {
+        streak=0;timer=Math.max(timer-3,0);
+        btn.classList.add('wrong');
+        btns.forEach(b=>{if(parseInt(b.textContent)===correctAnswer)b.classList.add('correct')});
+        playTone(200,200,'sawtooth',0.15);
+        if(navigator.vibrate)navigator.vibrate([100,30,100]);
+        document.getElementById('gameArea').classList.add('flash-wrong');
+        setTimeout(()=>document.getElementById('gameArea').classList.remove('flash-wrong'),300);
+      }
+      document.getElementById('scoreVal').textContent=score;
+      document.getElementById('streakPill').textContent=`🔥 ${streak}`;
+      btns.forEach(b=>b.style.pointerEvents='none');
+      setTimeout(()=>{if(gameRunning)generateQuestion()},400);
+    }
+
+    function startGame(){
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('gameOverScreen').classList.add('hidden');
+      document.getElementById('gameUI').style.display='flex';
+      document.getElementById('gameArea').style.display='flex';
+      score=0;streak=0;bestStreak=0;timer=timerMax;totalQ=0;correctQ=0;gameRunning=true;
+      document.getElementById('scoreVal').textContent='0';
+      document.getElementById('bestVal').textContent=load(`highScore_${difficulty}`,0);
+      document.getElementById('diffBadge').textContent=difficulty==='easy'?'ງ່າຍ':difficulty==='medium'?'ກາງ':'ຍາກ';
+      updateTimer();
+      generateQuestion();
+      clearInterval(timerInterval);
+      timerInterval=setInterval(()=>{
+        if(!gameRunning)return;
+        timer-=0.1;
+        updateTimer();
+        if(timer<=0){timer=0;updateTimer();gameOver()}
+      },100);
+    }
+
+    function updateTimer(){
+      const pct=(timer/timerMax)*100;
+      const fill=document.getElementById('timerFill');
+      fill.style.width=pct+'%';
+      fill.className='timer-fill'+(pct<15?' critical':pct<35?' low':'');
+      document.getElementById('timerText').textContent=timer.toFixed(1)+'s';
+    }
+
+    function gameOver(){
+      gameRunning=false;clearInterval(timerInterval);
+      const key=`highScore_${difficulty}`;
+      const isNew=score>load(key,0);
+      if(isNew)save(key,score);
+      const plays=load('totalGames',0)+1;save('totalGames',plays);
+
+      document.getElementById('gameUI').style.display='none';
+      document.getElementById('gameArea').style.display='none';
+      document.getElementById('goEmoji').textContent=score>=30?'🏆':score>=15?'🧠':'😢';
+      document.getElementById('finalScore').textContent=score;
+      document.getElementById('finalBest').textContent=Math.max(score,load(key,0));
+      document.getElementById('finalStreak').textContent=bestStreak;
+      document.getElementById('finalAccuracy').textContent=totalQ?Math.round(correctQ/totalQ*100)+'%':'0%';
+      document.getElementById('newRecord').classList.toggle('hidden',!isNew);
+      document.getElementById('gameOverScreen').classList.remove('hidden');
+    }
+
+    const hs=load(`highScore_${difficulty}`,0),tg=load('totalGames',0);
+    if(tg>0){document.getElementById('startStats').style.display='grid';document.getElementById('startBest').textContent=hs;document.getElementById('startPlays').textContent=tg}
+  </script>
+</body>
+</html>

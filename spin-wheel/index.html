@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="lo"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>ວົງລໍ້ໂຊກດີ — Spin Wheel</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+.bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}.bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}
+@supports(padding:env(safe-area-inset-top)){.header{padding-top:calc(12px + env(safe-area-inset-top))}}
+.title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.back{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.coins{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:6px}
+.area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:20px}
+.wheel-wrap{position:relative;width:300px;height:300px}
+.wheel-canvas{width:300px;height:300px}
+.pointer{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:2rem;z-index:5;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))}
+.spin-btn{width:70px;height:70px;border-radius:50%;background:var(--accent-grad);border:3px solid white;color:white;font-size:0.8rem;font-weight:800;cursor:pointer;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5;display:flex;align-items:center;justify-content:center;touch-action:manipulation;box-shadow:0 0 20px var(--glow)}
+.spin-btn:active{transform:translate(-50%,-50%) scale(0.95)}
+.spin-btn:disabled{opacity:0.5;cursor:default}
+.tokens{display:flex;gap:4px;align-items:center}.token{width:12px;height:12px;border-radius:50%;background:var(--accent)}.token.empty{background:var(--bg-glass);border:1px solid var(--border-glass)}
+.prize-popup{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:2.5rem;font-weight:800;pointer-events:none;z-index:100;opacity:0}
+.prize-popup.show{animation:prizeAnim 1.5s ease-out forwards}
+@keyframes prizeAnim{0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%) scale(1)}}
+.collection{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:350px;padding:8px}
+.col-item{font-size:1.5rem;opacity:0.2;transition:opacity 0.3s}.col-item.owned{opacity:1}
+.overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}
+.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s ease}.ov-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}.ov-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}
+@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}
+.btn:active{transform:scale(0.96)}.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}
+.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+.sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+</style></head>
+<body><div class="bg-dec"></div>
+<div class="overlay" id="start">
+  <div class="ov-emoji">🎰</div><div class="ov-title">ວົງລໍ້ໂຊກດີ</div><div class="ov-sub">ໝູນວົງລໍ້ — ເກັບລາງວັນ!</div>
+  <div class="btn-group"><button class="btn btn-primary" onclick="init()">🎰 ເລີ່ມ</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div>
+</div>
+<div class="header" id="hdr" style="display:none"><a href="../index.html" class="back">←</a><div class="title"><span>🎰</span><span>ວົງລໍ້ໂຊກດີ</span></div><div class="coins">🪙 <span id="coinVal">0</span></div></div>
+<div class="area" id="ga" style="display:none">
+  <div class="tokens" id="tokenBar"></div>
+  <div class="wheel-wrap"><div class="pointer">▼</div><canvas id="wc" width="600" height="600" class="wheel-canvas"></canvas><button class="spin-btn" id="spinBtn" onclick="spin()">ໝູນ</button></div>
+  <div style="font-size:0.8rem;color:var(--text2);text-align:center">ຂອງສະສົມ</div>
+  <div class="collection" id="col"></div>
+</div>
+<div class="prize-popup" id="prize">🎉</div>
+<button class="sound-btn" id="snd" onclick="sndOn=!sndOn;this.textContent=sndOn?'🔊':'🔇'">🔊</button>
+<script>
+const GID='spin-wheel';
+const SEGMENTS=[
+  {label:'🪙50',val:50,color:'#EF4444'},{label:'🪙100',val:100,color:'#F97316'},
+  {label:'⭐',val:0,item:'⭐',color:'#F59E0B'},{label:'🪙200',val:200,color:'#22C55E'},
+  {label:'🎁',val:0,item:'🎁',color:'#3B82F6'},{label:'🪙20',val:20,color:'#8B5CF6'},
+  {label:'💎',val:0,item:'💎',color:'#EC4899'},{label:'🪙150',val:150,color:'#06B6D4'},
+  {label:'🏆',val:0,item:'🏆',color:'#10B981'},{label:'🪙75',val:75,color:'#6366F1'},
+  {label:'🎯',val:0,item:'🎯',color:'#D946EF'},{label:'🪙300',val:300,color:'#F43F5E'}
+];
+const ALL_ITEMS=['⭐','🎁','💎','🏆','🎯','🎪','🎨','🎭','🎩','🎪','🌈','🔥','❄️','🌸','🍀'];
+let coins=0,tokens=5,maxTokens=5,spinning=false,angle=0,sndOn=true,ac=null,collection=new Set();
+function save(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function load(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
+function playTone(f,d,t='sine',v=0.2){if(!sndOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+(function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+
+function drawWheel(){
+  const c=document.getElementById('wc'),ctx=c.getContext('2d');
+  ctx.clearRect(0,0,600,600);ctx.save();ctx.translate(300,300);ctx.rotate(angle);
+  const n=SEGMENTS.length,arc=Math.PI*2/n;
+  SEGMENTS.forEach((s,i)=>{
+    ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,280,i*arc,(i+1)*arc);ctx.closePath();
+    ctx.fillStyle=s.color;ctx.fill();ctx.strokeStyle='rgba(0,0,0,0.2)';ctx.lineWidth=2;ctx.stroke();
+    ctx.save();ctx.rotate(i*arc+arc/2);ctx.textAlign='center';ctx.fillStyle='white';ctx.font='bold 28px system-ui';
+    ctx.fillText(s.label,180,10);ctx.restore()
+  });
+  // Center circle
+  ctx.beginPath();ctx.arc(0,0,40,0,Math.PI*2);ctx.fillStyle='#1a1a2e';ctx.fill();ctx.strokeStyle='white';ctx.lineWidth=3;ctx.stroke();
+  ctx.restore()
+}
+
+function updateTokens(){
+  const tb=document.getElementById('tokenBar');tb.innerHTML='';
+  for(let i=0;i<maxTokens;i++){const t=document.createElement('div');t.className='token'+(i>=tokens?' empty':'');tb.appendChild(t)}
+}
+function updateCoins(){document.getElementById('coinVal').textContent=coins}
+function updateCol(){
+  const c=document.getElementById('col');c.innerHTML='';
+  ALL_ITEMS.forEach(item=>{const d=document.createElement('div');d.className='col-item'+(collection.has(item)?' owned':'');d.textContent=item;c.appendChild(d)})
+}
+
+function spin(){
+  if(spinning||tokens<=0)return;tokens--;spinning=true;updateTokens();
+  const spinAngle=Math.PI*2*5+Math.random()*Math.PI*2;const dur=4000;const start=performance.now();const startAngle=angle;
+  document.getElementById('spinBtn').disabled=true;
+  function animate(now){
+    const elapsed=now-start;const t=Math.min(elapsed/dur,1);
+    const ease=1-Math.pow(1-t,3);// ease-out cubic
+    angle=startAngle+spinAngle*ease;
+    // Tick sound
+    const segAngle=Math.PI*2/SEGMENTS.length;
+    if(Math.floor((angle%Math.PI*2)/segAngle)!==Math.floor(((angle-0.05)%(Math.PI*2))/segAngle))playTone(800,20,'square',0.1);
+    drawWheel();
+    if(t<1){requestAnimationFrame(animate)}else{
+      spinning=false;document.getElementById('spinBtn').disabled=false;
+      // Determine winner: top position = angle mod 2PI, pointer at top
+      const norm=((Math.PI*2-angle%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
+      const idx=Math.floor(norm/(Math.PI*2/SEGMENTS.length))%SEGMENTS.length;
+      const prize=SEGMENTS[idx];
+      if(prize.val>0){coins+=prize.val;updateCoins();save('coins',coins)}
+      if(prize.item){collection.add(prize.item);save('collection',[...collection]);updateCol()}
+      // Show prize
+      const pp=document.getElementById('prize');pp.textContent=prize.label;pp.className='prize-popup show';
+      setTimeout(()=>pp.className='prize-popup',1500);
+      playTone(523,100,'sine',0.3);setTimeout(()=>playTone(659,100,'sine',0.3),100);setTimeout(()=>playTone(784,150,'sine',0.3),200);
+      if(navigator.vibrate)navigator.vibrate([30,40,30]);
+      save('tokens',tokens);save('lastSpin',Date.now())
+    }
+  }
+  requestAnimationFrame(animate)
+}
+
+function checkTokenRegen(){
+  const last=load('lastSpin',0);const elapsed=Date.now()-last;
+  const regained=Math.floor(elapsed/1800000);// 30 min per token
+  if(regained>0&&tokens<maxTokens){tokens=Math.min(tokens+regained,maxTokens);save('tokens',tokens)}
+}
+
+function init(){
+  document.getElementById('start').classList.add('hidden');
+  document.getElementById('hdr').style.display='flex';document.getElementById('ga').style.display='flex';
+  coins=load('coins',0);tokens=load('tokens',5);collection=new Set(load('collection',[]));
+  checkTokenRegen();updateCoins();updateTokens();updateCol();drawWheel()
+}
+</script></body></html>
