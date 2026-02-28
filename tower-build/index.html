@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="lo"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>ກໍ່ຕຶກ — Tower Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}:root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif}body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+.bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}.bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}@supports(padding:env(safe-area-inset-top)){.header{padding-top:calc(12px + env(safe-area-inset-top))}}.title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}.back{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.scores{display:flex;gap:16px}.sc{text-align:center}.sc-l{font-size:0.65rem;color:var(--text2)}.sc-v{font-size:1.1rem;font-weight:700}.sc-v.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ga{flex:1;display:flex;align-items:center;justify-content:center;touch-action:manipulation;cursor:pointer}canvas{display:block;max-width:100%}
+.overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s}.ov-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}.ov-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}.si{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}.sv{font-size:1.8rem;font-weight:700}.sl{font-size:0.7rem;color:var(--text2);margin-top:4px}
+.nr{display:inline-flex;padding:4px 14px;border-radius:999px;font-size:0.8rem;font-weight:600;background:rgba(16,185,129,0.15);color:var(--success);margin-bottom:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}.btn:active{transform:scale(0.96)}.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+.perfect-text{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:2.5rem;font-weight:800;color:var(--success);pointer-events:none;opacity:0;z-index:100}
+.perfect-text.show{animation:perfectPop 0.8s ease-out forwards}
+@keyframes perfectPop{0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}40%{transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-70%) scale(1)}}
+.sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+</style></head><body><div class="bg-dec"></div>
+<div class="overlay" id="startScr"><div class="ov-emoji">🏗️</div><div class="ov-title">ກໍ່ຕຶກ</div><div class="ov-sub">ແຕະ — ວາງບລ໋ອກ — ຊ້ອນສູງ!<br>ລະວັງ! ສ່ວນເກີນຈະຖືກຕັດ!</div>
+<div class="sg" id="ss" style="display:none"><div class="si"><div class="sv" id="sBest">0</div><div class="sl">ດີສຸດ</div></div><div class="si"><div class="sv" id="sPlays">0</div><div class="sl">ຫຼິ້ນແລ້ວ</div></div></div>
+<div class="btn-group"><button class="btn btn-primary" onclick="startGame()">🏗️ ເລີ່ມ</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="overlay hidden" id="goScr"><div class="ov-emoji" id="ge">😢</div><div class="ov-title">ຈົບເກມ</div><div class="nr hidden" id="newRec">🏆 ສະຖິຕິໃໝ່!</div>
+<div class="sg"><div class="si"><div class="sv" id="fScore">0</div><div class="sl">ຊັ້ນ</div></div><div class="si"><div class="sv" id="fBest" style="background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">0</div><div class="sl">ດີທີ່ສຸດ</div></div></div>
+<div class="btn-group"><button class="btn btn-primary" onclick="startGame()">🔄 ລອງໃໝ່</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="header" id="hdr" style="display:none"><a href="../index.html" class="back">←</a><div class="title"><span>🏗️</span><span>ກໍ່ຕຶກ</span></div><div class="scores"><div class="sc"><div class="sc-l">ຊັ້ນ</div><div class="sc-v" id="scV">0</div></div><div class="sc"><div class="sc-l">ດີສຸດ</div><div class="sc-v best" id="bV">0</div></div></div></div>
+<div class="ga" id="gameArea" style="display:none"><canvas id="c"></canvas></div>
+<div class="perfect-text" id="perfectText">PERFECT!</div>
+<button class="sound-btn" id="snd" onclick="sndOn=!sndOn;this.textContent=sndOn?'🔊':'🔇'">🔊</button>
+<script>
+const GID='tower-build',cv=document.getElementById('c'),cx=cv.getContext('2d');
+const COLORS=[['#EF4444','#DC2626'],['#F97316','#EA580C'],['#FBBF24','#D97706'],['#22C55E','#16A34A'],['#3B82F6','#2563EB'],['#8B5CF6','#7C3AED'],['#EC4899','#DB2777'],['#06B6D4','#0891B2']];
+let W,H,blocks,current,score,speed,dir,perfects,falling,running,sndOn=true,ac=null;
+const BH=24;
+function save(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function load(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
+function playTone(f,d,t='sine',v=0.2){if(!sndOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+(function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+
+function resize(){const a=document.getElementById('gameArea'),r=a.getBoundingClientRect(),dp=devicePixelRatio||1;W=Math.min(r.width-16,400);H=Math.min(r.height-16,600);cv.style.width=W+'px';cv.style.height=H+'px';cv.width=W*dp;cv.height=H*dp;cx.scale(dp,dp)}
+
+function startGame(){
+  document.querySelectorAll('.overlay').forEach(o=>o.classList.add('hidden'));
+  document.getElementById('hdr').style.display='flex';document.getElementById('gameArea').style.display='flex';
+  resize();score=0;speed=2;dir=1;perfects=0;falling=[];running=true;
+  blocks=[{x:W/2-60,w:120,y:H-BH}];
+  current={x:0,w:120};
+  document.getElementById('scV').textContent='0';document.getElementById('bV').textContent=load('hs',0);
+  document.getElementById('gameArea').onclick=drop;loop()
+}
+
+function drop(){
+  if(!running)return;
+  const prev=blocks[blocks.length-1];
+  const overlap_start=Math.max(current.x,prev.x);const overlap_end=Math.min(current.x+current.w,prev.x+prev.w);
+  const overlapW=overlap_end-overlap_start;
+  if(overlapW<=0){running=false;gameOver();return}
+  const isPerfect=Math.abs(current.x-prev.x)<3;
+  if(isPerfect){
+    perfects++;
+    const pp=document.getElementById('perfectText');pp.classList.remove('show');void pp.offsetWidth;pp.classList.add('show');
+    playTone(523+perfects*50,100,'sine',0.3);if(navigator.vibrate)navigator.vibrate(15)
+  } else {
+    perfects=0;
+    // Cut off piece — add falling debris
+    const cutW=current.w-overlapW;
+    if(current.x<prev.x)falling.push({x:current.x,w:cutW,y:H-BH*(blocks.length+1),vy:0,c:score%COLORS.length});
+    else falling.push({x:overlap_end,w:cutW,y:H-BH*(blocks.length+1),vy:0,c:score%COLORS.length});
+    playTone(400,40,'sine',0.15)
+  }
+  const newBlock={x:isPerfect?prev.x:overlap_start,w:isPerfect?prev.w:overlapW,y:H-BH*(blocks.length+1)};
+  blocks.push(newBlock);score++;document.getElementById('scV').textContent=score;
+  current={x:dir>0?0:W-newBlock.w,w:newBlock.w};speed=Math.min(2+score*0.15,6);
+  // Scroll down if too many blocks
+  if(blocks.length>Math.floor(H/BH)-3){blocks.forEach(b=>b.y+=BH);falling.forEach(f=>f.y+=BH)}
+}
+
+function loop(){
+  cx.clearRect(0,0,W,H);cx.fillStyle='#0f0f1a';cx.fillRect(0,0,W,H);
+  // Draw placed blocks
+  blocks.forEach((b,i)=>{const c=COLORS[i%COLORS.length];const g=cx.createLinearGradient(b.x,b.y,b.x+b.w,b.y+BH);g.addColorStop(0,c[0]);g.addColorStop(1,c[1]);cx.fillStyle=g;cx.fillRect(b.x,b.y,b.w,BH-1)});
+  // Draw current
+  if(running){
+    current.x+=speed*dir;if(current.x+current.w>W){dir=-1;current.x=W-current.w}if(current.x<0){dir=1;current.x=0}
+    const ci=score%COLORS.length;const g2=cx.createLinearGradient(current.x,0,current.x+current.w,0);g2.addColorStop(0,COLORS[ci][0]);g2.addColorStop(1,COLORS[ci][1]);
+    const cy=Math.max(0,H-BH*(blocks.length+1));cx.fillStyle=g2;cx.fillRect(current.x,cy,current.w,BH-1)
+  }
+  // Falling debris
+  falling=falling.filter(f=>{f.vy+=0.3;f.y+=f.vy;if(f.y>H+50)return false;
+    cx.fillStyle=COLORS[f.c%COLORS.length][0];cx.globalAlpha=0.5;cx.fillRect(f.x,f.y,f.w,BH-1);cx.globalAlpha=1;return true})
+  if(running)requestAnimationFrame(loop)
+}
+
+function gameOver(){
+  playTone(200,300,'sawtooth',0.2);if(navigator.vibrate)navigator.vibrate([100,50,100]);
+  const isNew=score>load('hs',0);if(isNew)save('hs',score);save('tg',(load('tg',0)||0)+1);
+  setTimeout(()=>{document.getElementById('gameArea').onclick=null;document.getElementById('hdr').style.display='none';document.getElementById('gameArea').style.display='none';
+    document.getElementById('ge').textContent=score>=20?'🏆':score>=10?'🏗️':'😢';
+    document.getElementById('fScore').textContent=score;document.getElementById('fBest').textContent=Math.max(score,load('hs',0));
+    document.getElementById('newRec').classList.toggle('hidden',!isNew);document.getElementById('goScr').classList.remove('hidden')
+  },600)
+}
+const hs=load('hs',0),tg=load('tg',0);if(tg>0){document.getElementById('ss').style.display='grid';document.getElementById('sBest').textContent=hs;document.getElementById('sPlays').textContent=tg}
+</script></body></html>

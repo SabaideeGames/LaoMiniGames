@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="lo"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>ທາຍຄຳ — Wordle Mini</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}:root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--warn:#f59e0b;--danger:#6b7280;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif;--green:#22c55e;--yellow:#eab308;--gray:#4b5563}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+.bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}.bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}@supports(padding:env(safe-area-inset-top)){.header{padding-top:calc(12px + env(safe-area-inset-top))}}.title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}.back{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.info-btns{display:flex;gap:6px}.info-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text2);font-size:0.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:16px;gap:8px}
+.grid{display:grid;grid-template-rows:repeat(6,1fr);gap:6px}
+.row{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.cell{width:52px;height:52px;border:2px solid var(--border-glass);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;text-transform:uppercase;transition:all 0.3s}
+.cell.filled{border-color:rgba(255,255,255,0.3)}
+.cell.correct{background:var(--green);border-color:var(--green);color:white}
+.cell.present{background:var(--yellow);border-color:var(--yellow);color:white}
+.cell.absent{background:var(--gray);border-color:var(--gray);color:white}
+.cell.pop{animation:popIn 0.1s ease}
+@keyframes popIn{0%{transform:scale(0.8)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+.cell.flip{animation:flipIn 0.5s ease}
+@keyframes flipIn{0%{transform:rotateX(0)}50%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+.keyboard{display:flex;flex-direction:column;gap:6px;width:100%;max-width:400px}
+.kb-row{display:flex;justify-content:center;gap:4px}
+.key{min-width:28px;height:48px;border-radius:6px;border:none;background:rgba(255,255,255,0.15);color:var(--text);font-size:0.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;touch-action:manipulation;font-family:system-ui;text-transform:uppercase}
+.key:active{transform:scale(0.92)}.key.wide{min-width:50px;font-size:0.7rem}
+.key.correct{background:var(--green);color:white}.key.present{background:var(--yellow);color:white}.key.absent{background:var(--gray);color:rgba(255,255,255,0.5)}
+.overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s}.ov-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}.ov-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}.si{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}.sv{font-size:1.8rem;font-weight:700}.sl{font-size:0.7rem;color:var(--text2);margin-top:4px}
+.streak-badge{display:inline-flex;padding:6px 16px;border-radius:999px;font-size:0.9rem;font-weight:700;background:linear-gradient(135deg,#f59e0b,#ef4444);color:white;margin-bottom:16px}
+.dist{width:100%;max-width:260px;margin-bottom:16px}.dist-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:0.75rem}.dist-label{width:12px;text-align:center}.dist-bar{height:16px;background:var(--gray);border-radius:2px;min-width:16px;display:flex;align-items:center;justify-content:flex-end;padding-right:4px;font-size:0.6rem;font-weight:700;color:white;transition:width 0.5s}.dist-bar.highlight{background:var(--green)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}.btn:active{transform:scale(0.96)}.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);padding:10px 20px;background:white;color:#0f0f1a;border-radius:8px;font-weight:700;font-size:0.85rem;z-index:500;opacity:0;transition:opacity 0.3s}.toast.show{opacity:1}
+.sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+</style></head><body><div class="bg-dec"></div>
+<div class="overlay" id="startScr"><div class="ov-emoji">🔤</div><div class="ov-title">ທາຍຄຳ</div><div class="ov-sub">ທາຍຄຳ 5 ຕົວອັກສອນ<br>6 ລອບ — ທຸກມື້ 1 ຄຳ!</div>
+<div class="sg" id="ss" style="display:none"><div class="si"><div class="sv" id="sStreak">0</div><div class="sl">🔥 Streak</div></div><div class="si"><div class="sv" id="sWin">0%</div><div class="sl">ຊະນະ</div></div></div>
+<div class="btn-group"><button class="btn btn-primary" onclick="startGame()">🔤 ເລີ່ມ</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="overlay hidden" id="resultScr"><div class="ov-emoji" id="rEmoji">🎉</div><div class="ov-title" id="rTitle">ສຳເລັດ!</div><div class="ov-sub" id="rSub">ຄຳຕອບ: HELLO</div>
+<div class="streak-badge" id="rStreak">🔥 Streak: 1</div>
+<div class="dist" id="rDist"></div>
+<div class="btn-group"><button class="btn btn-primary" onclick="shareResult()">📤 ແບ່ງປັນ</button><button class="btn btn-secondary" onclick="startGame()">🔄 ທາຍແບບສຸ່ມ</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="header" id="hdr" style="display:none"><a href="../index.html" class="back">←</a><div class="title"><span>🔤</span><span>ທາຍຄຳ</span></div><div class="info-btns"></div></div>
+<div class="area" id="ga" style="display:none">
+  <div class="grid" id="grid"></div>
+  <div class="keyboard" id="kb"></div>
+</div>
+<div class="toast" id="toast"></div>
+<button class="sound-btn" id="snd" onclick="sndOn=!sndOn;this.textContent=sndOn?'🔊':'🔇'">🔊</button>
+<script>
+const GID='wordle-mini';
+// Simple word list (common 5-letter English words)
+const WORDS=["apple","beach","chair","dance","eagle","flame","grape","house","juice","knife","lemon","magic","night","ocean","piano","queen","river","snake","tiger","under","vivid","watch","youth","zebra","about","above","admit","after","again","agree","alarm","album","alert","alive","allow","alone","among","angel","anger","angry","apart","arena","armor","array","asset","avoid","awake","aware","badge","basic","begin","being","below","bench","birth","black","blade","blame","blank","blaze","bleed","blend","bless","blind","block","blood","bloom","blown","board","bonus","boost","bound","brain","brand","brave","bread","break","brick","bride","brief","bring","broad","brown","brush","build","burst","buyer","cabin","candy","cargo","carry","catch","cause","chain","chalk","chaos","charm","chase","cheap","check","chief","child","chill","china","chunk","claim","clamp","clash","class","clean","clear","climb","cling","clock","clone","close","cloud","coach","coast","coral","count","court","cover","crack","craft","crane","crash","crazy","cream","crime","cross","crowd","crown","cruel","crush","curve","cycle","daily","dairy","daisy","dated","dealt","death","debug","debut","decor","delay","delta","demon","dense","depth","derby","devil","diary","digit","dirty","disco","ditch","dizzy","dodge","donor","doubt","dough","draft","drain","drake","drama","drank","drape","drawn","dream","dress","dried","drift","drill","drink","drive","drone","drown","drugs","drums","drunk","dryer","dying","eager","early","earth","eight","elbow","elder","elect","elite","email","ember","empty","entry","equal","error","essay","event","every","exact","exam","exile","exist","extra","fable","facet","fairy","faith","false","fancy","fatal","feast","fever","fewer","fiber","field","fifty","fight","final","first","fixed","flags","flash","fleet","flesh","float","flood","floor","flora","flour","fluid","flush","flute","focal","focus","folly","force","forge","forth","forum","found","frame","frank","fraud","fresh","front","frost","froze","fruit","fully","fungi","fuzzy","ghost","giant","given","glass","gleam","glide","globe","gloom","glory","gloss","glove","grace","grade","grain","grand","grant","grasp","grass","grave","great","green","greet","grief","grind","gripe","groom","gross","group","grove","grown","guard","guess","guest","guide","guild","guilt","guise","gummy","habit","happy","hardy","harsh","hasty","haven","hazel","heart","heavy","hello","herbs","hilly","hinge","hobby","honey","honor","hoped","horse","hotel","human","humor","hurry","ideal","image","imply","inbox","index","indie","infer","inner","input","intro","ionic","ivory","jewel","joint","jolly","judge","kebab","knack","kneel","knelt","knobs","knock","known","label","labor","lance","large","laser","latch","later","laugh","layer","lease","leave","legal","level","light","limit","linen","liner","livid","llama","local","lodge","lofty","logic","loner","loose","lover","lower","loyal","lucky","lunar","lunch","lying","lyric","macro","manor","maple","march","match","maybe","mayor","mealy","medal","media","mercy","merge","merit","metal","meter","minor","minus","mirth","model","moist","money","month","moral","motor","mount","mourn","mouse","mouth","movie","muddy","music","naive","nerve","never","newly","niche","noble","noise","north","notch","noted","novel","nurse","nylon","oasis","occur","offer","olive","onset","opera","orbit","order","organ","other","ought","outer","oxide","ozone","paint","panel","panic","paper","party","pasta","paste","patch","pause","peace","peach","pearl","penny","perch","phase","phone","photo","piece","pilot","pinch","pitch","pixel","pizza","place","plain","plane","plant","plate","plaza","plead","plumb","plume","plump","plunk","point","polar","porch","poser","pouch","pound","power","press","price","pride","prime","print","prior","prize","probe","prone","proof","proud","prove","proxy","prune","psalm","pulse","punch","pupil","purse","push","qualm","query","quest","queue","quick","quiet","quilt","quirk","quota","quote","rabbi","radar","radio","rally","ranch","range","rapid","ratio","reach","react","reads","realm","rebel","recap","reign","relax","relay","renal","renew","repay","repel","reply","retry","rider","ridge","rifle","right","rigid","rinse","rival","river","roast","robot","rocky","rogue","roman","roses","rouge","rough","round","route","royal","rugby","ruled","ruler","rumor","rural","sadly","saint","salad","salty","sauce","scale","scene","scope","scout","sense","serum","serve","setup","seven","shade","shake","shame","shape","share","shark","sharp","shelf","shell","shift","shine","shirt","shock","shore","short","shout","shown","siege","sight","sigma","silly","since","sixth","sixty","sized","skill","skull","slate","slave","sleep","slice","slide","slope","smart","smell","smile","smoke","snack","solar","solid","solve","sonic","sorry","south","space","spare","spark","spawn","speak","speed","spell","spend","sperm","spice","spike","spine","spite","split","spoke","spoon","sport","spray","squad","stack","staff","stage","stair","stake","stale","stall","stamp","stand","stare","stark","start","start","state","stays","steak","steal","steam","steel","steep","steer","stern","stick","stiff","still","stock","stole","stone","stood","storm","story","stove","strap","straw","stray","strip","stuck","study","stuff","stump","style","sugar","suite","sunny","super","surge","swamp","swear","sweat","sweep","sweet","swept","swift","swing","sword","sworn","syrup","table","taste","teach","teens","teeth","tempo","tends","tenor","tense","terms","theft","theme","there","thick","thief","thing","think","third","thorn","those","three","threw","throw","thumb","tidal","tight","timer","tired","title","toast","today","token","total","touch","tough","tours","towel","tower","toxic","trace","track","trade","trail","train","trait","trash","treat","trend","trial","tribe","trick","tried","tries","troop","trout","truck","truly","trunk","trust","truth","tumor","tuner","tunic","turns","tutor","twice","twist","tying","ultra","uncle","under","undue","union","unite","unity","unmet","until","upper","upset","urban","usage","usher","usual","utter","vague","valid","value","valve","vapor","vault","venue","verse","video","vigor","vinyl","viola","viral","virus","visit","vista","vital","vivid","vocal","vodka","voice","voted","voter","wages","wagon","waist","waste","watch","water","weary","weave","wedge","weird","whale","wheat","wheel","where","which","while","white","whole","whose","wider","widow","width","witch","woman","world","worry","worse","worst","worth","wound","wrath","write","wrong","wrote","yacht","yield","young","yours","zebra"];
+let answer='',guesses=[],currentGuess='',currentRow=0,gameOver=false,isDaily=true,sndOn=true,ac=null;
+const KB_ROWS=[['q','w','e','r','t','y','u','i','o','p'],['a','s','d','f','g','h','j','k','l'],['enter','z','x','c','v','b','n','m','⌫']];
+let keyStates={};
+function save(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function load(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
+function playTone(f,d,t='sine',v=0.2){if(!sndOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+(function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+
+function getDailyWord(){const d=new Date();const seed=d.getFullYear()*10000+d.getMonth()*100+d.getDate();return WORDS[seed%WORDS.length]}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1500)}
+
+function renderGrid(){
+  const g=document.getElementById('grid');g.innerHTML='';
+  for(let r=0;r<6;r++){
+    const row=document.createElement('div');row.className='row';
+    for(let c=0;c<5;c++){
+      const cell=document.createElement('div');cell.className='cell';
+      if(r<guesses.length){
+        cell.textContent=guesses[r][c].letter;cell.classList.add(guesses[r][c].state);cell.classList.add('flip');
+        cell.style.animationDelay=(c*0.15)+'s'
+      } else if(r===currentRow&&c<currentGuess.length){
+        cell.textContent=currentGuess[c];cell.classList.add('filled','pop')
+      }
+      row.appendChild(cell)
+    }
+    g.appendChild(row)
+  }
+}
+function renderKeyboard(){
+  const kb=document.getElementById('kb');kb.innerHTML='';
+  KB_ROWS.forEach(row=>{
+    const r=document.createElement('div');r.className='kb-row';
+    row.forEach(key=>{
+      const k=document.createElement('button');k.className='key'+(key.length>1?' wide':'');
+      if(keyStates[key])k.classList.add(keyStates[key]);
+      k.textContent=key==='enter'?'↵':key;k.onclick=()=>pressKey(key);r.appendChild(k)
+    });
+    kb.appendChild(r)
+  })
+}
+function pressKey(key){
+  if(gameOver)return;
+  if(key==='⌫'){currentGuess=currentGuess.slice(0,-1);playTone(300,30,'sine',0.1);renderGrid();return}
+  if(key==='enter'){submitGuess();return}
+  if(currentGuess.length>=5)return;
+  currentGuess+=key;playTone(500,25,'sine',0.08);renderGrid()
+}
+function submitGuess(){
+  if(currentGuess.length!==5){showToast('ຕ້ອງ 5 ຕົວ!');return}
+  // Evaluate
+  const result=[];const ansArr=answer.split('');const guessArr=currentGuess.split('');
+  const used=Array(5).fill(false);
+  // First pass: correct
+  for(let i=0;i<5;i++){if(guessArr[i]===ansArr[i]){result[i]={letter:guessArr[i],state:'correct'};used[i]=true}else{result[i]={letter:guessArr[i],state:'absent'}}}
+  // Second pass: present
+  for(let i=0;i<5;i++){if(result[i].state==='correct')continue;for(let j=0;j<5;j++){if(!used[j]&&guessArr[i]===ansArr[j]){result[i].state='present';used[j]=true;break}}}
+  guesses.push(result);
+  // Update key states
+  result.forEach(r=>{const prev=keyStates[r.letter];if(r.state==='correct')keyStates[r.letter]='correct';else if(r.state==='present'&&prev!=='correct')keyStates[r.letter]='present';else if(!prev)keyStates[r.letter]='absent'});
+  currentRow++;currentGuess='';
+  const won=result.every(r=>r.state==='correct');
+  if(won){gameOver=true;
+    playTone(523,100,'sine',0.3);setTimeout(()=>playTone(659,100,'sine',0.3),100);setTimeout(()=>playTone(784,200,'sine',0.3),200);
+    if(navigator.vibrate)navigator.vibrate(30);
+    const stats=load('stats',{played:0,won:0,streak:0,maxStreak:0,dist:[0,0,0,0,0,0]});
+    stats.played++;stats.won++;stats.streak++;if(stats.streak>stats.maxStreak)stats.maxStreak=stats.streak;
+    stats.dist[currentRow-1]++;save('stats',stats);save('lastDay',new Date().toDateString());
+    setTimeout(()=>showResult(true,currentRow),1500)
+  } else if(currentRow>=6){gameOver=true;
+    playTone(200,300,'sawtooth',0.2);
+    const stats=load('stats',{played:0,won:0,streak:0,maxStreak:0,dist:[0,0,0,0,0,0]});
+    stats.played++;stats.streak=0;save('stats',stats);save('lastDay',new Date().toDateString());
+    setTimeout(()=>showResult(false,0),1000)
+  } else {playTone(400,40,'sine',0.1)}
+  renderGrid();renderKeyboard()
+}
+function showResult(won,row){
+  document.getElementById('hdr').style.display='none';document.getElementById('ga').style.display='none';
+  document.getElementById('rEmoji').textContent=won?['🏆','🎉','😎','👍','😅','😬'][row-1]:'😢';
+  document.getElementById('rTitle').textContent=won?'ສຳເລັດ!':'ຈົບເກມ';
+  document.getElementById('rSub').textContent=`ຄຳຕອບ: ${answer.toUpperCase()}`;
+  const stats=load('stats',{played:0,won:0,streak:0,maxStreak:0,dist:[0,0,0,0,0,0]});
+  document.getElementById('rStreak').textContent=`🔥 Streak: ${stats.streak}`;
+  // Distribution
+  const distEl=document.getElementById('rDist');distEl.innerHTML='';
+  const maxD=Math.max(...stats.dist,1);
+  stats.dist.forEach((d,i)=>{const r=document.createElement('div');r.className='dist-row';
+    r.innerHTML=`<div class="dist-label">${i+1}</div><div class="dist-bar${won&&i===row-1?' highlight':''}" style="width:${Math.max(d/maxD*100,8)}%">${d}</div>`;distEl.appendChild(r)});
+  document.getElementById('resultScr').classList.remove('hidden')
+}
+function shareResult(){
+  const emojiMap={correct:'🟩',present:'🟨',absent:'⬛'};
+  let text=`ທາຍຄຳ ${guesses.length}/6\n\n`;
+  guesses.forEach(row=>{text+=row.map(r=>emojiMap[r.state]).join('')+'\n'});
+  if(navigator.share)navigator.share({text});else if(navigator.clipboard){navigator.clipboard.writeText(text);showToast('ກ໊ອບປີ້ແລ້ວ!')}
+}
+function startGame(){
+  document.querySelectorAll('.overlay').forEach(o=>o.classList.add('hidden'));
+  document.getElementById('hdr').style.display='flex';document.getElementById('ga').style.display='flex';
+  const today=new Date().toDateString();const lastDay=load('lastDay','');
+  if(lastDay===today){answer=WORDS[Math.floor(Math.random()*WORDS.length)];isDaily=false}
+  else{answer=getDailyWord();isDaily=true}
+  guesses=[];currentGuess='';currentRow=0;gameOver=false;keyStates={};renderGrid();renderKeyboard()
+}
+// Keyboard input
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter')pressKey('enter');else if(e.key==='Backspace')pressKey('⌫');
+  else if(/^[a-z]$/.test(e.key))pressKey(e.key)
+});
+const stats=load('stats',null);
+if(stats&&stats.played>0){document.getElementById('ss').style.display='grid';document.getElementById('sStreak').textContent=stats.streak;document.getElementById('sWin').textContent=Math.round(stats.won/stats.played*100)+'%'}
+</script></body></html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="lo"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>ຜະສົມຢາ — Potion Craft</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}:root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif}body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+.bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}.bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}@supports(padding:env(safe-area-inset-top)){.header{padding-top:calc(12px + env(safe-area-inset-top))}}.title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}.back{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.info{display:flex;gap:8px;font-size:0.85rem;font-weight:600}.pill{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:999px;padding:4px 12px}
+.area{flex:1;display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.combine-zone{display:flex;gap:16px;align-items:center;justify-content:center;padding:20px;background:var(--bg-glass);border:2px dashed var(--border-glass);border-radius:16px;width:100%;max-width:350px;min-height:80px}
+.slot{width:64px;height:64px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px dashed var(--border-glass);display:flex;align-items:center;justify-content:center;font-size:2rem;cursor:pointer;transition:all 0.2s;touch-action:manipulation}
+.slot.filled{border-style:solid;background:var(--bg-glass)}.slot:active{transform:scale(0.9)}
+.plus{font-size:1.5rem;color:var(--text2)}.equals{font-size:1.5rem;color:var(--accent)}
+.combine-btn{padding:10px 24px;border-radius:999px;border:none;background:var(--accent-grad);color:white;font-family:var(--font);font-size:1rem;font-weight:700;cursor:pointer;touch-action:manipulation;box-shadow:0 0 15px var(--glow)}.combine-btn:active{transform:scale(0.96)}.combine-btn:disabled{opacity:0.3}
+.items{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:100%;max-width:350px}
+.item{display:flex;flex-direction:column;align-items:center;padding:8px;border-radius:12px;background:var(--bg-glass);border:1px solid var(--border-glass);cursor:pointer;transition:all 0.15s;touch-action:manipulation;min-width:60px}
+.item:active{transform:scale(0.93)}.item.selected{border-color:var(--accent);box-shadow:0 0 10px var(--glow)}
+.item-emoji{font-size:1.8rem}.item-name{font-size:0.55rem;color:var(--text2);margin-top:2px;text-align:center;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.section-title{font-size:0.8rem;color:var(--text2);font-weight:600;text-align:center;margin-top:8px}
+.discovery{font-size:0.75rem;color:var(--accent);text-align:center}.new-badge{display:inline-flex;padding:2px 8px;border-radius:999px;font-size:0.6rem;font-weight:700;background:rgba(16,185,129,0.15);color:var(--success);animation:bounceIn 0.5s}
+@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s}.ov-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}.ov-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}.btn:active{transform:scale(0.96)}.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+.sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+</style></head><body><div class="bg-dec"></div>
+<div class="overlay" id="startScr"><div class="ov-emoji">🧪</div><div class="ov-title">ຜະສົມຢາ</div><div class="ov-sub">ລວມວັດຖຸດິບ — ຄົ້ນພົບສິ່ງໃໝ່!</div>
+<div class="btn-group"><button class="btn btn-primary" onclick="init()">🧪 ເລີ່ມ</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="header" id="hdr" style="display:none"><a href="../index.html" class="back">←</a><div class="title"><span>🧪</span><span>ຜະສົມຢາ</span></div><div class="info"><div class="pill" id="discInfo">0/0</div></div></div>
+<div class="area" id="ga" style="display:none">
+  <div class="combine-zone"><div class="slot" id="slot1" onclick="clearSlot(0)"></div><div class="plus">+</div><div class="slot" id="slot2" onclick="clearSlot(1)"></div><div class="equals">=</div><button class="combine-btn" id="combBtn" onclick="combine()" disabled>ລວມ!</button></div>
+  <div class="discovery" id="result"></div>
+  <div class="section-title">📦 ວັດຖຸດິບ</div>
+  <div class="items" id="items"></div>
+</div>
+<button class="sound-btn" id="snd" onclick="sndOn=!sndOn;this.textContent=sndOn?'🔊':'🔇'">🔊</button>
+<script>
+const GID='potion-craft';
+// Recipe system: sorted pair key → result
+const BASE_ITEMS=[{id:'fire',emoji:'🔥',name:'ໄຟ'},{id:'water',emoji:'💧',name:'ນ້ຳ'},{id:'earth',emoji:'🌍',name:'ດິນ'},{id:'air',emoji:'💨',name:'ລົມ'},{id:'seed',emoji:'🌱',name:'ແກ່ນ'},{id:'stone',emoji:'🪨',name:'ຫີນ'}];
+const RECIPES={
+  'air+fire':'⚡','air+water':'🌧️','earth+fire':'🌋','earth+water':'🌊','air+earth':'🏔️','fire+water':'💨',
+  'air+seed':'🌿','earth+seed':'🌳','fire+seed':'🌻','water+seed':'🍀','fire+stone':'💎','water+stone':'🧊',
+  'air+stone':'⛰️','earth+stone':'🏗️','⚡+💧':'🌈','🔥+🌿':'🍂','💧+🌳':'🍎','🔥+💎':'👑',
+  '🌧️+🌍':'🍄','⚡+🌱':'🌵','🌋+💨':'☁️','💧+🧊':'❄️','🔥+🍀':'☘️','⚡+🪨':'🧲',
+  '🌊+🌱':'🐟','🏔️+💧':'⛲','💎+💧':'🔮','🌳+🔥':'🪵','🍎+🔥':'🥧','👑+💎':'🏆',
+  '🍄+💧':'🧃','🌵+💧':'🌴','❄️+🔥':'💦','🧲+⚡':'💡','🐟+🔥':'🍣','🔮+⚡':'✨',
+  '🪵+🔥':'🏠','🥧+🌱':'🎂','🏆+✨':'🌟','💡+🏠':'🏙️','🍣+🌴':'🏝️','🎂+👑':'🎪',
+};
+let discovered=new Set(),selected=[null,null],sndOn=true,ac=null;
+function save(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function load(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
+function playTone(f,d,t='sine',v=0.2){if(!sndOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+(function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+
+function getAllItems(){
+  const items=[...BASE_ITEMS];
+  discovered.forEach(emoji=>{if(!items.find(i=>i.emoji===emoji))items.push({id:emoji,emoji,name:emoji})});
+  return items
+}
+function selectItem(emoji){
+  if(!selected[0]){selected[0]=emoji}
+  else if(!selected[1]&&emoji!==selected[0]){selected[1]=emoji}
+  else return;
+  playTone(400,30,'sine',0.1);render()
+}
+function clearSlot(i){selected[i]=null;render()}
+function combine(){
+  if(!selected[0]||!selected[1])return;
+  const key=[selected[0],selected[1]].sort().join('+');
+  const result=RECIPES[key];
+  const resEl=document.getElementById('result');
+  if(result){
+    const isNew=!discovered.has(result);discovered.add(result);
+    save('discovered',[...discovered]);
+    resEl.innerHTML=`${isNew?'<span class="new-badge">ໃໝ່!</span> ':''} ${selected[0]} + ${selected[1]} = ${result}`;
+    playTone(523,100,'sine',0.3);setTimeout(()=>playTone(659,100,'sine',0.3),100);
+    if(navigator.vibrate)navigator.vibrate(isNew?[30,40,30]:20)
+  } else {
+    resEl.textContent=`${selected[0]} + ${selected[1]} = ❌ ບໍ່ມີສູດ`;
+    playTone(200,100,'square',0.1)
+  }
+  selected=[null,null];render()
+}
+function render(){
+  const items=getAllItems();
+  const c=document.getElementById('items');c.innerHTML='';
+  items.forEach(item=>{
+    const d=document.createElement('div');d.className='item';d.onclick=()=>selectItem(item.emoji);
+    d.innerHTML=`<div class="item-emoji">${item.emoji}</div><div class="item-name">${item.name}</div>`;c.appendChild(d)
+  });
+  document.getElementById('slot1').textContent=selected[0]||'';document.getElementById('slot1').className='slot'+(selected[0]?' filled':'');
+  document.getElementById('slot2').textContent=selected[1]||'';document.getElementById('slot2').className='slot'+(selected[1]?' filled':'');
+  document.getElementById('combBtn').disabled=!selected[0]||!selected[1];
+  document.getElementById('discInfo').textContent=`${discovered.size}/${Object.keys(RECIPES).length}`
+}
+function init(){
+  document.getElementById('startScr').classList.add('hidden');document.getElementById('hdr').style.display='flex';document.getElementById('ga').style.display='flex';
+  discovered=new Set(load('discovered',[]));selected=[null,null];render()
+}
+</script></body></html>

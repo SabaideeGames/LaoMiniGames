@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="lo"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>ຈັດສີນ້ຳ — Water Sort</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}:root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+.bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}.bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}@supports(padding:env(safe-area-inset-top)){.header{padding-top:calc(12px + env(safe-area-inset-top))}}.title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}.back{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.info{display:flex;gap:8px;font-size:0.85rem;font-weight:600}.pill{background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:999px;padding:4px 12px}
+.area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:16px}
+.tubes-wrap{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:400px}
+.tube{display:flex;flex-direction:column-reverse;width:48px;height:160px;border:2px solid var(--border-glass);border-top:none;border-radius:0 0 12px 12px;cursor:pointer;transition:all 0.2s;touch-action:manipulation;position:relative;background:rgba(255,255,255,0.02);overflow:hidden}
+.tube::before{content:'';position:absolute;top:-8px;left:-2px;right:-2px;height:10px;border:2px solid var(--border-glass);border-bottom:none;border-radius:6px 6px 0 0;background:transparent}
+.tube:active{transform:scale(0.96)}
+.tube.selected{border-color:var(--accent);box-shadow:0 0 15px var(--glow);transform:translateY(-8px)}
+.tube.selected::before{border-color:var(--accent)}
+.layer{width:100%;transition:all 0.2s;border-radius:0 0 2px 2px;position:relative}
+.layer::after{content:'';position:absolute;top:0;left:4px;right:60%;height:40%;background:rgba(255,255,255,0.15);border-radius:0 0 4px 0}
+.controls{display:flex;gap:12px}
+.ctrl-btn{padding:10px 20px;border-radius:999px;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:0.85rem;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:6px;touch-action:manipulation}.ctrl-btn:active{transform:scale(0.96)}
+.overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s}.ov-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}.ov-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}.si{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}.sv{font-size:1.8rem;font-weight:700}.sl{font-size:0.7rem;color:var(--text2);margin-top:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}.btn:active{transform:scale(0.96)}.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+.sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+.confetti{position:fixed;top:0;left:50%;font-size:1.5rem;pointer-events:none;z-index:300;opacity:0}
+.confetti.show{animation:confettiFall 1.5s ease-out forwards}
+@keyframes confettiFall{0%{opacity:1;transform:translate(-50%,0) rotate(0)}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),100vh) rotate(720deg)}}
+</style></head><body><div class="bg-dec"></div>
+<div class="overlay" id="startScr"><div class="ov-emoji">💧</div><div class="ov-title">ຈັດສີນ້ຳ</div><div class="ov-sub">ຖອກນ້ຳ — ແຕ່ລະຫຼອດມີ 1 ສີ!</div>
+<div class="sg" id="ss" style="display:none"><div class="si"><div class="sv" id="sLvl">1</div><div class="sl">ດ່ານສູງສຸດ</div></div><div class="si"><div class="sv" id="sMoves">0</div><div class="sl">ການເຄື່ອນ</div></div></div>
+<div class="btn-group"><button class="btn btn-primary" onclick="startGame()">💧 ເລີ່ມ</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="overlay hidden" id="winScr"><div class="ov-emoji">🎉</div><div class="ov-title">ສຳເລັດ!</div><div class="ov-sub" id="winSub">ດ່ານ 1 ສຳເລັດ!</div>
+<div class="btn-group"><button class="btn btn-primary" onclick="nextLevel()">▶️ ດ່ານຕໍ່ໄປ</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="header" id="hdr" style="display:none"><a href="../index.html" class="back">←</a><div class="title"><span>💧</span><span>ດ່ານ <span id="lvlNum">1</span></span></div><div class="info"><div class="pill" id="moveInfo">0 ຍ້າຍ</div></div></div>
+<div class="area" id="ga" style="display:none">
+  <div class="tubes-wrap" id="tubes"></div>
+  <div class="controls"><button class="ctrl-btn" onclick="undoMove()">↩️ ຖອຍ</button><button class="ctrl-btn" onclick="resetLevel()">🔄 ໃໝ່</button></div>
+</div>
+<button class="sound-btn" id="snd" onclick="sndOn=!sndOn;this.textContent=sndOn?'🔊':'🔇'">🔊</button>
+<script>
+const GID='water-sort';
+const COLORS=['#EF4444','#3B82F6','#22C55E','#F59E0B','#8B5CF6','#EC4899','#06B6D4','#F97316','#10B981','#6366F1','#D946EF','#14B8A6'];
+const LAYER_H=36;
+let level=1,tubes=[],selected=-1,moves=0,history=[],sndOn=true,ac=null;
+function save(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function load(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
+function playTone(f,d,t='sine',v=0.2){if(!sndOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+(function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+
+function genLevel(lvl){
+  const numColors=Math.min(3+Math.floor(lvl/3),COLORS.length);
+  const numEmpty=lvl<5?2:lvl<15?2:1;
+  const numTubes=numColors+numEmpty;const cap=4;
+  // Create solved state
+  let layers=[];
+  for(let c=0;c<numColors;c++)for(let i=0;i<cap;i++)layers.push(c);
+  // Shuffle
+  for(let i=layers.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[layers[i],layers[j]]=[layers[j],layers[i]]}
+  // Distribute into tubes
+  tubes=[];
+  for(let t=0;t<numColors;t++){tubes.push(layers.splice(0,cap))}
+  for(let t=0;t<numEmpty;t++)tubes.push([]);
+  // Verify solvable (basic check - if stuck, re-gen)
+  selected=-1;moves=0;history=[];
+}
+
+function render(){
+  const c=document.getElementById('tubes');c.innerHTML='';
+  tubes.forEach((tube,i)=>{
+    const d=document.createElement('div');d.className='tube'+(selected===i?' selected':'');
+    d.onclick=()=>tapTube(i);
+    tube.forEach(colorIdx=>{
+      const l=document.createElement('div');l.className='layer';l.style.height=LAYER_H+'px';
+      l.style.background=COLORS[colorIdx];d.appendChild(l)
+    });
+    c.appendChild(d)
+  });
+  document.getElementById('moveInfo').textContent=moves+' ຍ້າຍ'
+}
+
+function tapTube(i){
+  if(selected===-1){
+    if(tubes[i].length===0)return;
+    selected=i;playTone(400,40,'sine',0.1);render();return
+  }
+  if(selected===i){selected=-1;render();return}
+  // Try pour
+  const from=tubes[selected],to=tubes[i];
+  if(to.length>=4){selected=-1;render();playTone(200,60,'square',0.1);return}
+  const topColor=from[from.length-1];
+  if(to.length>0&&to[to.length-1]!==topColor){selected=-1;render();playTone(200,60,'square',0.1);return}
+  // Pour all matching top layers
+  const prevState=JSON.stringify(tubes);
+  let poured=0;
+  while(from.length>0&&to.length<4&&from[from.length-1]===topColor){
+    to.push(from.pop());poured++
+  }
+  if(poured>0){
+    history.push(prevState);moves++;
+    playTone(500+poured*100,80,'sine',0.2);if(navigator.vibrate)navigator.vibrate(15)
+  }
+  selected=-1;render();checkWin()
+}
+
+function undoMove(){
+  if(history.length===0)return;
+  tubes=JSON.parse(history.pop());moves=Math.max(0,moves-1);selected=-1;
+  playTone(300,40,'sine',0.1);render()
+}
+
+function resetLevel(){genLevel(level);render()}
+
+function checkWin(){
+  const won=tubes.every(t=>t.length===0||(t.length===4&&t.every(c=>c===t[0])));
+  if(!won)return;
+  save('maxLvl',Math.max(level,load('maxLvl',0)||0));
+  save('totalMoves',(load('totalMoves',0)||0)+moves);
+  // Confetti
+  for(let i=0;i<12;i++){const c=document.createElement('div');c.className='confetti show';c.textContent=['🎉','⭐','💧','✨','🎊'][i%5];c.style.left=(10+Math.random()*80)+'%';c.style.setProperty('--dx',(Math.random()*100-50)+'px');c.style.animationDelay=(Math.random()*0.5)+'s';document.body.appendChild(c);setTimeout(()=>c.remove(),2000)}
+  playTone(523,100,'sine',0.3);setTimeout(()=>playTone(659,100,'sine',0.3),100);setTimeout(()=>playTone(784,200,'sine',0.3),200);
+  setTimeout(()=>{
+    document.getElementById('hdr').style.display='none';document.getElementById('ga').style.display='none';
+    document.getElementById('winSub').textContent=`ດ່ານ ${level} — ${moves} ການເຄື່ອນ`;
+    document.getElementById('winScr').classList.remove('hidden')
+  },800)
+}
+
+function nextLevel(){level++;startGame()}
+
+function startGame(){
+  document.querySelectorAll('.overlay').forEach(o=>o.classList.add('hidden'));
+  document.getElementById('hdr').style.display='flex';document.getElementById('ga').style.display='flex';
+  document.getElementById('lvlNum').textContent=level;genLevel(level);render()
+}
+const ml=load('maxLvl',0),tm=load('totalMoves',0);
+if(ml>0){document.getElementById('ss').style.display='grid';document.getElementById('sLvl').textContent=ml;document.getElementById('sMoves').textContent=tm}
+</script></body></html>

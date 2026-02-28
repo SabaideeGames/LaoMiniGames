@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="lo"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>ສະລ໋ອດ — Slot Machine</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}:root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif}body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+.bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}.bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}@supports(padding:env(safe-area-inset-top)){.header{padding-top:calc(12px + env(safe-area-inset-top))}}.title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}.back{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.coins-display{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:6px}
+.area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px}
+.machine{background:var(--bg-glass);border:2px solid var(--border-glass);border-radius:24px;padding:24px;width:100%;max-width:320px;display:flex;flex-direction:column;align-items:center;gap:16px;position:relative;overflow:hidden}
+.machine::before{content:'';position:absolute;top:0;left:0;right:0;height:60%;background:linear-gradient(180deg,rgba(124,58,237,0.05),transparent);pointer-events:none}
+.reels{display:flex;gap:8px;justify-content:center}
+.reel{width:80px;height:80px;border-radius:16px;background:rgba(0,0,0,0.3);border:2px solid var(--border-glass);display:flex;align-items:center;justify-content:center;font-size:3rem;overflow:hidden;position:relative}
+.reel.spinning .reel-inner{animation:slotSpin 0.1s linear infinite}
+@keyframes slotSpin{0%{transform:translateY(0)}100%{transform:translateY(-80px)}}
+.reel-inner{transition:transform 0.3s ease-out}
+.jackpot-bar{width:100%;text-align:center}.jb-label{font-size:0.65rem;color:var(--text2)}.jb-val{font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#f59e0b,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.spin-btn{width:100%;padding:16px;border-radius:16px;border:none;background:var(--accent-grad);color:white;font-family:var(--font);font-size:1.2rem;font-weight:800;cursor:pointer;touch-action:manipulation;box-shadow:0 0 25px var(--glow);transition:all 0.2s}
+.spin-btn:active{transform:scale(0.96)}.spin-btn:disabled{opacity:0.3}
+.result-text{font-size:1.2rem;font-weight:700;text-align:center;min-height:30px;transition:all 0.3s}
+.result-text.win{color:var(--success);animation:bounceIn 0.5s}
+.result-text.lose{color:var(--text2)}
+@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.paytable{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;max-width:320px;font-size:0.7rem}
+.pay-row{display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:8px}
+.pay-combo{opacity:0.8}.pay-val{font-weight:700;color:var(--success)}
+.overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s}.ov-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}.ov-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}.btn:active{transform:scale(0.96)}.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+.sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+</style></head><body><div class="bg-dec"></div>
+<div class="overlay" id="startScr"><div class="ov-emoji">🎰</div><div class="ov-title">ສະລ໋ອດ</div><div class="ov-sub">ໝູນ 3 ວົງ — ຈັບ 3 ອັນດຽວກັນ!</div>
+<div class="btn-group"><button class="btn btn-primary" onclick="init()">🎰 ເລີ່ມ</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="header" id="hdr" style="display:none"><a href="../index.html" class="back">←</a><div class="title"><span>🎰</span><span>ສະລ໋ອດ</span></div><div class="coins-display">🪙 <span id="coinVal">100</span></div></div>
+<div class="area" id="ga" style="display:none">
+  <div class="machine">
+    <div class="jackpot-bar"><div class="jb-label">🏆 JACKPOT</div><div class="jb-val" id="jpVal">500</div></div>
+    <div class="reels"><div class="reel" id="r0"><span>🍒</span></div><div class="reel" id="r1"><span>🍒</span></div><div class="reel" id="r2"><span>🍒</span></div></div>
+    <div class="result-text" id="result">&nbsp;</div>
+    <button class="spin-btn" id="spinBtn" onclick="spin()">🎰 SPIN — 🪙10</button>
+  </div>
+  <div class="paytable">
+    <div class="pay-row"><span class="pay-combo">🍒🍒🍒</span><span class="pay-val">×3</span></div>
+    <div class="pay-row"><span class="pay-combo">🍋🍋🍋</span><span class="pay-val">×5</span></div>
+    <div class="pay-row"><span class="pay-combo">🍇🍇🍇</span><span class="pay-val">×8</span></div>
+    <div class="pay-row"><span class="pay-combo">🔔🔔🔔</span><span class="pay-val">×15</span></div>
+    <div class="pay-row"><span class="pay-combo">💎💎💎</span><span class="pay-val">×25</span></div>
+    <div class="pay-row"><span class="pay-combo">7️⃣7️⃣7️⃣</span><span class="pay-val">JACKPOT!</span></div>
+  </div>
+</div>
+<button class="sound-btn" id="snd" onclick="sndOn=!sndOn;this.textContent=sndOn?'🔊':'🔇'">🔊</button>
+<script>
+const GID='slot-machine';
+const SYMBOLS=['🍒','🍋','🍇','🔔','💎','7️⃣'];
+const PAYOUTS={'🍒':3,'🍋':5,'🍇':8,'🔔':15,'💎':25,'7️⃣':0};// 7=jackpot
+const WEIGHTS=[30,25,20,12,8,5];// Higher = more common
+let coins=100,jackpot=500,spinning=false,sndOn=true,ac=null;
+function save(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function load(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
+function playTone(f,d,t='sine',v=0.2){if(!sndOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+(function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+
+function weightedRandom(){const total=WEIGHTS.reduce((a,b)=>a+b,0);let r=Math.random()*total;for(let i=0;i<WEIGHTS.length;i++){r-=WEIGHTS[i];if(r<=0)return i}return 0}
+
+function spin(){
+  if(spinning||coins<10)return;coins-=10;jackpot+=5;spinning=true;
+  document.getElementById('spinBtn').disabled=true;document.getElementById('result').innerHTML='&nbsp;';
+  update();
+  // Spin animation
+  const reels=[0,1,2].map(()=>weightedRandom());
+  const spinDurations=[800,1200,1600];
+  const intervals=[];
+  [0,1,2].forEach(i=>{
+    const el=document.getElementById('r'+i);el.classList.add('spinning');
+    let count=0;
+    intervals[i]=setInterval(()=>{el.querySelector('span').textContent=SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)];
+      playTone(800,10,'square',0.03);count++},60);
+    setTimeout(()=>{
+      clearInterval(intervals[i]);el.classList.remove('spinning');el.querySelector('span').textContent=SYMBOLS[reels[i]];
+      playTone(400,50,'sine',0.15);if(navigator.vibrate)navigator.vibrate(15);
+      if(i===2){// All stopped
+        setTimeout(()=>checkResult(reels.map(r=>SYMBOLS[r])),300)
+      }
+    },spinDurations[i])
+  })
+}
+
+function checkResult(results){
+  spinning=false;document.getElementById('spinBtn').disabled=false;
+  const res=document.getElementById('result');
+  if(results[0]===results[1]&&results[1]===results[2]){
+    // Triple match!
+    if(results[0]==='7️⃣'){
+      coins+=jackpot;res.className='result-text win';res.textContent=`🏆 JACKPOT! +${jackpot}🪙`;
+      jackpot=500;playTone(523,200,'sine',0.4);setTimeout(()=>playTone(659,200,'sine',0.4),200);setTimeout(()=>playTone(784,400,'sine',0.4),400);
+      if(navigator.vibrate)navigator.vibrate([100,50,100,50,200])
+    } else {
+      const win=10*PAYOUTS[results[0]];coins+=win;res.className='result-text win';res.textContent=`🎉 +${win}🪙!`;
+      playTone(523,100,'sine',0.3);setTimeout(()=>playTone(659,100,'sine',0.3),100);if(navigator.vibrate)navigator.vibrate([30,40,30])
+    }
+  } else if(results[0]===results[1]||results[1]===results[2]||results[0]===results[2]){
+    res.className='result-text lose';res.textContent='ເກືອບແລ້ວ! 😮';playTone(350,80,'sine',0.1)
+  } else {
+    res.className='result-text lose';res.textContent='ລອງໃໝ່!';playTone(250,60,'sine',0.05)
+  }
+  save('coins',coins);save('jackpot',jackpot);update()
+}
+
+function update(){
+  document.getElementById('coinVal').textContent=coins;document.getElementById('jpVal').textContent=jackpot;
+  document.getElementById('spinBtn').disabled=coins<10||spinning;
+  if(coins<10&&!spinning)document.getElementById('spinBtn').textContent='🪙 ໝົດແລ້ວ!';
+  else document.getElementById('spinBtn').textContent='🎰 SPIN — 🪙10'
+}
+
+function init(){
+  document.getElementById('startScr').classList.add('hidden');document.getElementById('hdr').style.display='flex';document.getElementById('ga').style.display='flex';
+  coins=load('coins',100);jackpot=load('jackpot',500);update();
+  [0,1,2].forEach(i=>document.getElementById('r'+i).querySelector('span').textContent=SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)])
+}
+</script></body></html>

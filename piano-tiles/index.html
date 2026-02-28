@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="lo"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"><title>ເປຍໂນ — Piano Tiles</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}:root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent:#7C3AED;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10b981;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+.bg-dec{position:fixed;inset:0;z-index:-1;pointer-events:none}.bg-dec::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(124,58,237,0.08)0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(37,99,235,0.06)0%,transparent 50%)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;z-index:10}@supports(padding:env(safe-area-inset-top)){.header{padding-top:calc(12px + env(safe-area-inset-top))}}.title{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px}.back{width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.scores{display:flex;gap:16px}.sc{text-align:center}.sc-l{font-size:0.65rem;color:var(--text2)}.sc-v{font-size:1.1rem;font-weight:700}.sc-v.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ga{flex:1;position:relative;display:flex;touch-action:manipulation;overflow:hidden}
+.lane{flex:1;position:relative;border-right:1px solid rgba(255,255,255,0.05)}.lane:last-child{border:none}
+.tile{position:absolute;left:2px;right:2px;border-radius:4px;cursor:pointer;transition:background 0.1s}
+.tile.black{background:#1e293b}
+.tile.tapped{background:var(--accent);opacity:0.3}
+.tile.missed{background:#ef4444}
+.overlay{position:fixed;inset:0;background:rgba(15,15,26,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;z-index:200;opacity:1;transition:opacity 0.4s}.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:4rem;margin-bottom:16px;animation:bounceIn 0.5s}.ov-title{font-size:2.2rem;font-weight:800;margin-bottom:8px;text-align:center}.ov-sub{font-size:1rem;color:var(--text2);margin-bottom:24px;text-align:center}@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}.si{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}.sv{font-size:1.8rem;font-weight:700}.sl{font-size:0.7rem;color:var(--text2);margin-top:4px}
+.nr{display:inline-flex;padding:4px 14px;border-radius:999px;font-size:0.8rem;font-weight:600;background:rgba(16,185,129,0.15);color:var(--success);margin-bottom:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 40px;border:none;border-radius:999px;font-family:var(--font);font-size:1.15rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:220px}.btn:active{transform:scale(0.96)}.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px}
+.sound-btn{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--border-glass);background:var(--bg-glass);color:var(--text);font-size:1.2rem;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}
+</style></head><body><div class="bg-dec"></div>
+<div class="overlay" id="startScr"><div class="ov-emoji">🎹</div><div class="ov-title">ເປຍໂນ</div><div class="ov-sub">ແຕະແຜ່ນດຳ — ຢ່າແຕະແຜ່ນຂາວ!</div>
+<div class="sg" id="ss" style="display:none"><div class="si"><div class="sv" id="sBest">0</div><div class="sl">ຄະແນນສູງສຸດ</div></div><div class="si"><div class="sv" id="sPlays">0</div><div class="sl">ຫຼິ້ນແລ້ວ</div></div></div>
+<div class="btn-group"><button class="btn btn-primary" onclick="startGame()">🎹 ເລີ່ມ</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="overlay hidden" id="goScr"><div class="ov-emoji" id="ge">😢</div><div class="ov-title">ຈົບເກມ</div><div class="nr hidden" id="newRec">🏆 ສະຖິຕິໃໝ່!</div>
+<div class="sg"><div class="si"><div class="sv" id="fScore">0</div><div class="sl">ຄະແນນ</div></div><div class="si"><div class="sv" id="fBest" style="background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">0</div><div class="sl">ດີທີ່ສຸດ</div></div></div>
+<div class="btn-group"><button class="btn btn-primary" onclick="startGame()">🔄 ລອງໃໝ່</button><a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a></div></div>
+<div class="header" id="hdr" style="display:none"><a href="../index.html" class="back">←</a><div class="title"><span>🎹</span><span>ເປຍໂນ</span></div><div class="scores"><div class="sc"><div class="sc-l">ຄະແນນ</div><div class="sc-v" id="scV">0</div></div><div class="sc"><div class="sc-l">ດີສຸດ</div><div class="sc-v best" id="bV">0</div></div></div></div>
+<div class="ga" id="gameArea" style="display:none"></div>
+<button class="sound-btn" id="snd" onclick="sndOn=!sndOn;this.textContent=sndOn?'🔊':'🔇'">🔊</button>
+<script>
+const GID='piano-tiles',COLS=4;
+const NOTES=[262,294,330,349,392,440,494,523,587,659];
+let tiles=[],score=0,speed=3,running=false,tileH,ga,sndOn=true,ac=null,frameId;
+function save(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function load(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
+function playNote(col){if(!sndOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=NOTES[(score+col)%NOTES.length];g.gain.value=0.25;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.3);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+0.3)}catch(e){}}
+function playTone(f,d,t='sine',v=0.2){if(!sndOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+(function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+
+function startGame(){
+  document.querySelectorAll('.overlay').forEach(o=>o.classList.add('hidden'));
+  document.getElementById('hdr').style.display='flex';
+  ga=document.getElementById('gameArea');ga.style.display='flex';
+  ga.innerHTML='';
+  const gaH=ga.getBoundingClientRect().height;tileH=gaH/5;score=0;speed=3;running=true;tiles=[];
+  document.getElementById('scV').textContent='0';document.getElementById('bV').textContent=load('hs',0);
+  // Create lanes
+  for(let i=0;i<COLS;i++){const lane=document.createElement('div');lane.className='lane';lane.dataset.col=i;ga.appendChild(lane)}
+  // Spawn initial tiles
+  for(let i=0;i<6;i++)spawnRow(-tileH*i);
+  // Touch/click handler
+  ga.onclick=ga.ontouchstart=handleTap;
+  loop()
+}
+
+function spawnRow(y){
+  const blackCol=Math.floor(Math.random()*COLS);
+  tiles.push({col:blackCol,y:y||(-tileH),tapped:false,missed:false,id:Date.now()+Math.random()})
+}
+
+function handleTap(e){
+  e.preventDefault();if(!running)return;
+  const rect=ga.getBoundingClientRect();
+  const x=(e.clientX||e.touches?.[0]?.clientX||0)-rect.left;
+  const y=(e.clientY||e.touches?.[0]?.clientY||0)-rect.top;
+  const col=Math.floor(x/(rect.width/COLS));
+  // Find lowest untapped tile that overlaps y
+  let hit=false;
+  for(let i=tiles.length-1;i>=0;i--){
+    const t=tiles[i];if(t.tapped||t.missed)continue;
+    if(y>=t.y&&y<=t.y+tileH){
+      if(t.col===col){t.tapped=true;score++;speed=3+Math.min(score*0.05,8);
+        document.getElementById('scV').textContent=score;
+        playNote(col);if(navigator.vibrate)navigator.vibrate(10);hit=true;break
+      } else {gameOver();return}
+    }
+  }
+  if(!hit){
+    // Tapped white space in row with black tile → miss
+    for(const t of tiles){if(!t.tapped&&!t.missed&&y>=t.y&&y<=t.y+tileH){gameOver();return}}
+  }
+}
+
+function loop(){
+  if(!running)return;
+  const gaH=ga.getBoundingClientRect().height;
+  // Move tiles
+  tiles.forEach(t=>t.y+=speed);
+  // Check if bottom tile was missed
+  for(const t of tiles){if(!t.tapped&&!t.missed&&t.y>gaH){t.missed=true;gameOver();return}}
+  // Spawn new tiles
+  const topTile=Math.min(...tiles.map(t=>t.y));
+  if(topTile>0)spawnRow(topTile-tileH);
+  // Remove old tiles
+  tiles=tiles.filter(t=>t.y<gaH+tileH);
+  // Render
+  const lanes=ga.querySelectorAll('.lane');
+  lanes.forEach(l=>l.innerHTML='');
+  tiles.forEach(t=>{
+    const lane=lanes[t.col];if(!lane)return;
+    const el=document.createElement('div');el.className='tile'+(t.tapped?' tapped':t.missed?' missed':' black');
+    el.style.top=t.y+'px';el.style.height=tileH+'px';lane.appendChild(el)
+  });
+  frameId=requestAnimationFrame(loop)
+}
+
+function gameOver(){
+  running=false;cancelAnimationFrame(frameId);
+  playTone(200,300,'sawtooth',0.2);if(navigator.vibrate)navigator.vibrate([100,50,100]);
+  const isNew=score>load('hs',0);if(isNew)save('hs',score);save('tg',(load('tg',0)||0)+1);
+  setTimeout(()=>{
+    ga.style.display='none';document.getElementById('hdr').style.display='none';
+    document.getElementById('ge').textContent=score>=100?'🏆':score>=50?'🎹':'😢';
+    document.getElementById('fScore').textContent=score;document.getElementById('fBest').textContent=Math.max(score,load('hs',0));
+    document.getElementById('newRec').classList.toggle('hidden',!isNew);document.getElementById('goScr').classList.remove('hidden')
+  },500)
+}
+const hs=load('hs',0),tg=load('tg',0);if(tg>0){document.getElementById('ss').style.display='grid';document.getElementById('sBest').textContent=hs;document.getElementById('sPlays').textContent=tg}
+</script></body></html>
