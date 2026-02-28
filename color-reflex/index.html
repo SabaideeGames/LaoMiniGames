@@ -410,6 +410,9 @@
     }
     function vibrate(p) { if (navigator.vibrate) navigator.vibrate(p); }
 
+    // Mobile audio unlock
+    (function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('touchend',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('touchend',u,true);document.addEventListener('click',u,true)})()
+
     // =============================================
     // GAME LOGIC
     // =============================================

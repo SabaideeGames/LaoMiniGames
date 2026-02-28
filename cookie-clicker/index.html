@@ -106,6 +106,8 @@
     let aC=null,snd=true;
     function initA(){if(!aC)aC=new(window.AudioContext||window.webkitAudioContext)();if(aC.state==='suspended')aC.resume()}
     function tone(f,d,t='sine',v=0.12){if(!snd||!aC)return;try{const o=aC.createOscillator(),g=aC.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,aC.currentTime+d/1000);o.connect(g);g.connect(aC.destination);o.start();o.stop(aC.currentTime+d/1000)}catch(e){}}
+    // Mobile audio unlock
+    (function(){function u(){initA();document.removeEventListener('touchstart',u,true);document.removeEventListener('touchend',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('touchend',u,true);document.addEventListener('click',u,true)})()
     function toggleSound(){snd=!snd;document.getElementById('soundBtn').textContent=snd?'🔊':'🔇'}
     function vib(p){if(navigator.vibrate)navigator.vibrate(p)}
 

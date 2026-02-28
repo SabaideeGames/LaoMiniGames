@@ -152,6 +152,8 @@ const GameUtils = {
   _audioCtx: null,
   _soundEnabled: true,
 
+  _audioUnlocked: false,
+
   initAudio() {
     if (!this._audioCtx) {
       this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -159,6 +161,24 @@ const GameUtils = {
     if (this._audioCtx.state === "suspended") {
       this._audioCtx.resume();
     }
+  },
+
+  /**
+   * Call once on page load to ensure AudioContext unlocks on mobile.
+   * Registers a one-time touch/click listener that creates & resumes audio.
+   */
+  unlockAudio() {
+    if (this._audioUnlocked) return;
+    const unlock = () => {
+      this.initAudio();
+      this._audioUnlocked = true;
+      document.removeEventListener("touchstart", unlock, true);
+      document.removeEventListener("touchend", unlock, true);
+      document.removeEventListener("click", unlock, true);
+    };
+    document.addEventListener("touchstart", unlock, true);
+    document.addEventListener("touchend", unlock, true);
+    document.addEventListener("click", unlock, true);
   },
 
   playTone(frequency = 440, duration = 100, type = "sine", volume = 0.3) {
