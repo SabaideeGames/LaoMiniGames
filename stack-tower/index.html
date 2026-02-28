@@ -54,7 +54,7 @@
         overflow: hidden;
         overscroll-behavior: none;
         -webkit-font-smoothing: antialiased;
-        touch-action: none;
+        touch-action: manipulation;
         user-select: none;
         -webkit-user-select: none;
         display: flex;
@@ -1053,6 +1053,11 @@
       // INPUT HANDLING
       // =============================================
       function handleTap(e) {
+        // Don't intercept button/link taps — let them fire normally
+        if (e.target.tagName === "BUTTON" || e.target.closest("button") ||
+            e.target.tagName === "A" || e.target.closest("a") ||
+            e.target.closest(".overlay:not(.hidden)")) return;
+
         e.preventDefault();
         if (!gameRunning) return;
 
@@ -1065,11 +1070,7 @@
       // Touch events
       document.addEventListener("touchstart", handleTap, { passive: false });
       // Mouse fallback
-      document.addEventListener("mousedown", function (e) {
-        // Don't trigger on buttons
-        if (e.target.tagName === "BUTTON" || e.target.closest("button")) return;
-        handleTap(e);
-      });
+      document.addEventListener("mousedown", handleTap);
 
       // Prevent default touch behaviors on game area
       document.addEventListener(
