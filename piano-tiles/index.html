@@ -36,9 +36,9 @@ let tiles=[],score=0,speed=3,running=false,tileH,ga,sndOn=true,ac=null,frameId;
 function save(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
 function load(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
 function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
-function playNote(col){if(!sndOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=NOTES[(score+col)%NOTES.length];g.gain.value=0.25;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.3);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+0.3)}catch(e){}}
-function playTone(f,d,t='sine',v=0.2){if(!sndOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
-(function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+function playNote(col){if(!sndOn||!ac)return;if(ac.state==='suspended'){ac.resume().then(()=>playTone(f,d,t,v));return;}try{const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=NOTES[(score+col)%NOTES.length];g.gain.value=0.25;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.3);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+0.3)}catch(e){}}
+function playTone(f,d,t='sine',v=0.2){if(!sndOn||!ac)return;if(ac.state==='suspended'){ac.resume().then(()=>playTone(f,d,t,v));return;}try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+(function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('touchend',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('touchend',u,true);document.addEventListener('click',u,true)})();
 
 function startGame(){
   document.querySelectorAll('.overlay').forEach(o=>o.classList.add('hidden'));

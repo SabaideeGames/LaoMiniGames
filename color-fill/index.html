@@ -99,8 +99,8 @@
     function save(k,v){try{localStorage.setItem(`game_${GAME_ID}_${k}`,JSON.stringify(v))}catch(e){}}
     function load(k,d=null){try{const r=localStorage.getItem(`game_${GAME_ID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
     function initAudio(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}
-    function playTone(f,d,t='sine',v=0.2){if(!soundOn||!ac)return;try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
-    (function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('click',u,true)})();
+    function playTone(f,d,t='sine',v=0.2){if(!soundOn||!ac)return;if(ac.state==='suspended'){ac.resume().then(()=>playTone(f,d,t,v));return;}try{const o=ac.createOscillator(),g=ac.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d/1000);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d/1000)}catch(e){}}
+    (function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('touchend',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('touchend',u,true);document.addEventListener('click',u,true)})();
     function toggleSound(){soundOn=!soundOn;document.getElementById('soundBtn').textContent=soundOn?'🔊':'🔇'}
     function setSize(s){gs=s;maxM={6:20,8:28,10:35}[s]||20;document.querySelectorAll('.level-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.size)===s))}
     function flood(r,c,col){if(r<0||r>=gs||c<0||c>=gs)return;const k=r*gs+c;if(owned.has(k)||grid[r][c]!==col)return;owned.add(k);flood(r-1,c,col);flood(r+1,c,col);flood(r,c-1,col);flood(r,c+1,col)}

@@ -145,7 +145,7 @@
 
     let aC=null,snd=true;
     function initA(){if(!aC)aC=new(window.AudioContext||window.webkitAudioContext)();if(aC.state==='suspended')aC.resume()}
-    function tone(f,d,t='sine',v=0.15){if(!snd||!aC)return;try{const o=aC.createOscillator(),g=aC.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,aC.currentTime+d/1000);o.connect(g);g.connect(aC.destination);o.start();o.stop(aC.currentTime+d/1000)}catch(e){}}
+    function tone(f,d,t='sine',v=0.15){if(!snd||!aC)return;if(aC.state==='suspended'){aC.resume().then(()=>tone(f,d,t,v));return;}try{const o=aC.createOscillator(),g=aC.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,aC.currentTime+d/1000);o.connect(g);g.connect(aC.destination);o.start();o.stop(aC.currentTime+d/1000)}catch(e){}}
     function toggleSound(){snd=!snd;document.getElementById('soundBtn').textContent=snd?'🔊':'🔇'}
     function vib(p){if(navigator.vibrate)navigator.vibrate(p)}
     // Mobile audio unlock

@@ -168,7 +168,7 @@
 
     // Audio
     function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume()}
-    function playTone(f,d,t='sine',v=0.2){if(!soundEnabled||!audioCtx)return;try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+d/1000);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d/1000)}catch(e){}}
+    function playTone(f,d,t='sine',v=0.2){if(!soundEnabled||!audioCtx)return;if(audioCtx.state==='suspended'){audioCtx.resume().then(()=>playTone(f,d,t,v));return;}try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+d/1000);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d/1000)}catch(e){}}
     function playGo(){playTone(880,150,'sine',0.3);setTimeout(()=>playTone(1108,200,'sine',0.3),100)}
     function playTap(){playTone(600,50,'square',0.15)}
     function playTooEarly(){playTone(200,300,'sawtooth',0.2)}

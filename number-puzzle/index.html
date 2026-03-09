@@ -378,6 +378,7 @@
     }
     function playTone(f, d, t = 'sine', v = 0.15) {
       if (!soundEnabled || !audioCtx) return;
+      if (audioCtx.state === 'suspended') { audioCtx.resume().then(() => playTone(f, d, t, v)); return; }
       try {
         const o = audioCtx.createOscillator(), g = audioCtx.createGain();
         o.type = t; o.frequency.value = f; g.gain.value = v;

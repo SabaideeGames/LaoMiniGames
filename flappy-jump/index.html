@@ -101,7 +101,7 @@
     function save(k,v){try{localStorage.setItem(`game_${GAME_ID}_${k}`,JSON.stringify(v))}catch(e){}}
     function load(k,d=null){try{const r=localStorage.getItem(`game_${GAME_ID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
     function initAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume()}
-    function playTone(f,d,t='sine',v=0.2){if(!soundEnabled||!audioCtx)return;try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+d/1000);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d/1000)}catch(e){}}
+    function playTone(f,d,t='sine',v=0.2){if(!soundEnabled||!audioCtx)return;if(audioCtx.state==='suspended'){audioCtx.resume().then(()=>playTone(f,d,t,v));return;}try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+d/1000);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+d/1000)}catch(e){}}
     (function(){function u(){initAudio();document.removeEventListener('touchstart',u,true);document.removeEventListener('touchend',u,true);document.removeEventListener('click',u,true)}document.addEventListener('touchstart',u,true);document.addEventListener('touchend',u,true);document.addEventListener('click',u,true)})();
     function toggleSound(){soundEnabled=!soundEnabled;document.getElementById('soundBtn').textContent=soundEnabled?'🔊':'🔇'}
 
