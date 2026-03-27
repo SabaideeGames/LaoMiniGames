@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ທາຍ100</title>
+<style>
+:root {
+  --bg: #0f0f1a;
+  --bg-glass: rgba(255,255,255,0.08);
+  --border-glass: rgba(255,255,255,0.12);
+  --text: #f0f0f5;
+  --text2: #a0a0b8;
+  --accent-grad: linear-gradient(135deg,#7C3AED,#2563EB);
+  --glow: rgba(124,58,237,0.3);
+  --success: #10B981;
+  --font: 'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box }
+html { font-size:16px; -webkit-text-size-adjust:100%; -webkit-tap-highlight-color:transparent }
+body { font-family:var(--font); background:var(--bg); color:var(--text); height:100vh; height:100dvh; overflow:hidden; overscroll-behavior:none; user-select:none; -webkit-user-select:none; display:flex; flex-direction:column }
+.overlay { position:fixed; inset:0; z-index:100; background:rgba(15,15,26,0.92); backdrop-filter:blur(16px); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px 20px; transition:opacity 0.4s }
+.overlay.hidden { opacity:0; pointer-events:none }
+.ov-emoji { font-size:3.5rem; margin-bottom:12px; animation:bounceIn 0.5s ease }
+.ov-title { font-size:2.2rem; font-weight:800; text-align:center; margin-bottom:6px }
+.ov-sub { font-size:0.95rem; color:var(--text2); text-align:center; margin-bottom:24px; max-width:300px }
+@keyframes bounceIn { 0%{transform:scale(0)} 50%{transform:scale(1.2)} 100%{transform:scale(1)} }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:14px 36px; border:none; border-radius:999px; font-family:var(--font); font-size:1.1rem; font-weight:600; cursor:pointer; transition:all 0.25s; touch-action:manipulation; min-width:200px }
+.btn:active { transform:scale(0.96) }
+.btn-primary { background:var(--accent-grad); color:white; box-shadow:0 0 20px var(--glow) }
+.btn-secondary { background:var(--bg-glass); color:var(--text); border:1px solid var(--border-glass) }
+.btn-group { display:flex; flex-direction:column; gap:12px; width:100%; max-width:260px; align-items:center }
+.stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; width:100%; max-width:300px; margin-bottom:24px }
+.stat-item { text-align:center; padding:14px 8px; background:var(--bg-glass); border:1px solid var(--border-glass); border-radius:12px }
+.stat-value { font-size:1.8rem; font-weight:700 }
+.stat-value.best { background:var(--accent-grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text }
+.stat-label { font-size:0.7rem; color:var(--text2); margin-top:4px }
+.new-record { display:inline-flex; gap:6px; padding:4px 14px; border-radius:999px; font-size:0.8rem; font-weight:600; background:rgba(16,185,129,0.15); color:var(--success); margin-bottom:16px }
+.new-record.hidden { display:none }
+.game-header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; z-index:10 }
+.back-btn { width:40px; height:40px; border-radius:50%; background:var(--bg-glass); border:1px solid var(--border-glass); color:var(--text); font-size:1.2rem; display:flex; align-items:center; justify-content:center; text-decoration:none; cursor:pointer }
+.game-title { font-size:1rem; font-weight:700 }
+.scores { display:flex; gap:14px }
+.score-box { text-align:center }
+.score-lbl { font-size:0.55rem; color:var(--text2) }
+.score-val { font-size:1rem; font-weight:700 }
+.score-val.best { background:var(--accent-grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text }
+.sound-btn { position:fixed; top:12px; right:12px; z-index:200; width:40px; height:40px; padding:0; border-radius:50%; font-size:1.1rem; background:var(--bg-glass); color:var(--text); border:1px solid var(--border-glass); cursor:pointer; touch-action:manipulation }
+.start-best { margin-top:16px; text-align:center }
+.start-best-lbl { font-size:0.7rem; color:var(--text2) }
+.start-best-val { font-size:1.3rem; font-weight:700; background:var(--accent-grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text }
+
+/* Game-specific */
+.game-area { flex:1; display:flex; flex-direction:column; align-items:center; padding:12px 16px 16px; overflow:hidden }
+.range-section { width:100%; max-width:340px; margin-bottom:14px }
+.range-info { text-align:center; font-size:0.82rem; color:var(--text2); margin-bottom:6px }
+.range-bar-wrap { width:100%; height:8px; background:rgba(255,255,255,0.1); border-radius:999px; overflow:hidden; position:relative }
+.range-bar { position:absolute; height:100%; background:var(--accent-grad); border-radius:999px; transition:left 0.35s ease, width 0.35s ease }
+.hint-box { width:100%; max-width:340px; min-height:52px; padding:13px 20px; border-radius:16px; text-align:center; font-size:1.05rem; font-weight:700; margin-bottom:12px; display:flex; align-items:center; justify-content:center; transition:all 0.25s }
+.hint-box.empty { background:transparent; border:1px solid transparent }
+.hint-box.correct { background:rgba(16,185,129,0.18); color:var(--success); border:1px solid rgba(16,185,129,0.4) }
+.hint-box.high { background:rgba(239,68,68,0.14); color:#F87171; border:1px solid rgba(239,68,68,0.3) }
+.hint-box.low { background:rgba(59,130,246,0.14); color:#60A5FA; border:1px solid rgba(59,130,246,0.3) }
+.input-row { display:flex; gap:10px; width:100%; max-width:340px; margin-bottom:10px }
+.guess-input { flex:1; padding:14px 16px; background:var(--bg-glass); border:1.5px solid var(--border-glass); border-radius:16px; color:var(--text); font-family:var(--font); font-size:1.4rem; font-weight:700; text-align:center; outline:none; user-select:text; -webkit-user-select:text; transition:border-color 0.2s }
+.guess-input:focus { border-color:rgba(124,58,237,0.55) }
+.guess-input::placeholder { color:var(--text2); font-size:0.85rem; font-weight:400 }
+/* Remove number input spinners */
+.guess-input::-webkit-inner-spin-button, .guess-input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0 }
+.guess-input[type=number] { -moz-appearance:textfield }
+.submit-btn { padding:14px 20px; background:var(--accent-grad); border:none; border-radius:16px; color:white; font-family:var(--font); font-size:1rem; font-weight:600; cursor:pointer; touch-action:manipulation; box-shadow:0 0 16px var(--glow); transition:all 0.2s; white-space:nowrap }
+.submit-btn:active { transform:scale(0.95) }
+.submit-btn:disabled { opacity:0.4; cursor:default }
+.attempts-label { font-size:0.82rem; color:var(--text2); margin-bottom:10px; align-self:flex-start; max-width:340px; width:100% }
+.history-wrap { flex:1; width:100%; max-width:340px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; padding-bottom:4px }
+.history-wrap::-webkit-scrollbar { width:3px }
+.history-wrap::-webkit-scrollbar-track { background:transparent }
+.history-wrap::-webkit-scrollbar-thumb { background:var(--border-glass); border-radius:2px }
+.history-item { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-radius:12px; background:var(--bg-glass); border:1px solid var(--border-glass); font-size:0.9rem; animation:slideIn 0.2s ease }
+@keyframes slideIn { from { opacity:0; transform:translateY(-6px) } to { opacity:1; transform:translateY(0) } }
+.history-item.correct { border-color:rgba(16,185,129,0.4) }
+.history-item.high { border-color:rgba(239,68,68,0.3) }
+.history-item.low { border-color:rgba(59,130,246,0.3) }
+.h-num { font-weight:700; font-size:1rem }
+.h-hint { font-size:0.8rem; color:var(--text2) }
+.history-item.correct .h-hint { color:var(--success) }
+.history-item.high .h-hint { color:#F87171 }
+.history-item.low .h-hint { color:#60A5FA }
+.history-empty { text-align:center; color:var(--text2); font-size:0.85rem; padding:16px 0 }
+</style>
+</head>
+<body>
+
+<button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+<!-- Start Overlay -->
+<div class="overlay" id="startOverlay">
+  <div class="ov-emoji">🔢</div>
+  <div class="ov-title">ທາຍ100</div>
+  <div class="ov-sub">ທາຍຕົວເລກ 1-100!</div>
+  <div class="start-best" id="startBestWrap">
+    <div class="start-best-lbl">ຄະແນນດີສຸດ</div>
+    <div class="start-best-val" id="startBestVal">-</div>
+  </div>
+  <div style="margin-top:24px" class="btn-group">
+    <button class="btn btn-primary" onclick="startGame()">▶ ເລີ່ມຫຼິ້ນ</button>
+    <a href="../index.html" class="btn btn-secondary">🏠 ໜ້າຫຼັກ</a>
+  </div>
+</div>
+
+<!-- Game Over Overlay -->
+<div class="overlay hidden" id="gameOverOverlay">
+  <div class="ov-emoji">🎉</div>
+  <div class="ov-title">ຖືກແລ້ວ!</div>
+  <div class="ov-sub" id="ovSub"></div>
+  <div class="new-record hidden" id="newRecord">⭐ ສະຖິຕິໃໝ່!</div>
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-value" id="ovScore">0</div>
+      <div class="stat-label">ຄະແນນ</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value best" id="ovBest">0</div>
+      <div class="stat-label">ດີສຸດ</div>
+    </div>
+    <div class="stat-item" style="grid-column:span 2">
+      <div class="stat-value" id="ovAttempts">0</div>
+      <div class="stat-label">ຈຳນວນຄັ້ງທີ່ທາຍ</div>
+    </div>
+  </div>
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="startGame()">▶ ຫຼິ້ນໃໝ່</button>
+    <a href="../index.html" class="btn btn-secondary">🏠 ໜ້າຫຼັກ</a>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="game-header">
+  <a href="../index.html" class="back-btn">←</a>
+  <div class="game-title">ທາຍ100</div>
+  <div class="scores">
+    <div class="score-box">
+      <div class="score-lbl">ຄະແນນ</div>
+      <div class="score-val" id="scoreDisplay">-</div>
+    </div>
+    <div class="score-box">
+      <div class="score-lbl">ດີສຸດ</div>
+      <div class="score-val best" id="bestDisplay">0</div>
+    </div>
+  </div>
+</div>
+
+<!-- Game Area -->
+<div class="game-area">
+  <div class="range-section">
+    <div class="range-info" id="rangeInfo">ໃນລະຫວ່າງ 1 - 100</div>
+    <div class="range-bar-wrap">
+      <div class="range-bar" id="rangeBar" style="left:0%;width:100%"></div>
+    </div>
+  </div>
+
+  <div class="hint-box empty" id="hintBox"></div>
+
+  <div class="input-row">
+    <input type="number" class="guess-input" id="guessInput"
+      min="1" max="100" inputmode="numeric" placeholder="1 – 100">
+    <button class="submit-btn" id="submitBtn" onclick="submitGuess()">ທາຍ</button>
+  </div>
+
+  <div class="attempts-label" id="attemptsLabel">ຄັ້ງທີ 1</div>
+
+  <div class="history-wrap" id="historyWrap">
+    <div class="history-empty" id="historyEmpty">ຍັງບໍ່ມີການທາຍ</div>
+  </div>
+</div>
+
+<script>
+const GID = 'guess-number';
+function sv(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function ld(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function getHS(){return ld('hs',0)}
+function updHS(s){const b=getHS();if(s>b){sv('hs',s);return true}return false}
+
+let aC=null, snd=true;
+function initA(){if(!aC)aC=new(window.AudioContext||window.webkitAudioContext)();if(aC.state==='suspended')aC.resume()}
+function tone(f,d,t='sine',v=0.12){if(!snd||!aC)return;try{const o=aC.createOscillator(),g=aC.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,aC.currentTime+d/1000);o.connect(g);g.connect(aC.destination);o.start();o.stop(aC.currentTime+d/1000)}catch(e){}}
+function toggleSound(){snd=!snd;document.getElementById('soundBtn').textContent=snd?'🔊':'🔇'}
+(function(){function u(){initA();document.removeEventListener('touchstart',u,true)}document.addEventListener('touchstart',u,true)})();
+
+let secret, attempts, lo, hi, gameActive = false;
+
+function startGame() {
+  secret = Math.floor(Math.random() * 100) + 1;
+  attempts = 0;
+  lo = 1; hi = 100;
+  gameActive = true;
+
+  document.getElementById('startOverlay').classList.add('hidden');
+  document.getElementById('gameOverOverlay').classList.add('hidden');
+  document.getElementById('historyWrap').innerHTML = '<div class="history-empty" id="historyEmpty">ຍັງບໍ່ມີການທາຍ</div>';
+  document.getElementById('hintBox').className = 'hint-box empty';
+  document.getElementById('hintBox').textContent = '';
+  document.getElementById('guessInput').value = '';
+  document.getElementById('guessInput').disabled = false;
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('scoreDisplay').textContent = '-';
+  document.getElementById('bestDisplay').textContent = getHS() || 0;
+
+  updateRange();
+  updateAttempts();
+  initA();
+  setTimeout(() => document.getElementById('guessInput').focus(), 150);
+}
+
+function updateRange() {
+  document.getElementById('rangeInfo').textContent = `ໃນລະຫວ່າງ ${lo} – ${hi}`;
+  const left = ((lo - 1) / 99) * 100;
+  const width = Math.max(((hi - lo) / 99) * 100, 2);
+  document.getElementById('rangeBar').style.left = left + '%';
+  document.getElementById('rangeBar').style.width = width + '%';
+}
+
+function updateAttempts() {
+  document.getElementById('attemptsLabel').textContent = `ຄັ້ງທີ ${attempts + 1}`;
+}
+
+function submitGuess() {
+  if (!gameActive) return;
+  initA();
+
+  const input = document.getElementById('guessInput');
+  const val = parseInt(input.value, 10);
+
+  if (isNaN(val) || val < 1 || val > 100) {
+    input.style.borderColor = 'rgba(239,68,68,0.7)';
+    setTimeout(() => { input.style.borderColor = ''; }, 600);
+    input.focus();
+    return;
+  }
+
+  attempts++;
+  input.value = '';
+
+  // Remove empty placeholder
+  const emptyEl = document.getElementById('historyEmpty');
+  if (emptyEl) emptyEl.remove();
+
+  const hintBox = document.getElementById('hintBox');
+  let hintText, hintClass, hintShort;
+
+  if (val === secret) {
+    hintText = 'ຖືກແລ້ວ! 🎉';
+    hintClass = 'correct';
+    hintShort = '✓ ຖືກ!';
+    gameActive = false;
+
+    // Win fanfare
+    [
+      [440, 0], [554, 110], [659, 220], [880, 360]
+    ].forEach(([f, delay]) => setTimeout(() => tone(f, 220, 'sine', 0.13), delay));
+
+    const score = Math.max(10, 100 - (attempts - 1) * 10);
+    const isNew = updHS(score);
+    document.getElementById('scoreDisplay').textContent = score;
+    document.getElementById('bestDisplay').textContent = getHS();
+    document.getElementById('guessInput').disabled = true;
+    document.getElementById('submitBtn').disabled = true;
+
+    addHistoryItem(val, hintClass, hintShort);
+    hintBox.className = 'hint-box ' + hintClass;
+    hintBox.textContent = hintText;
+    updateAttempts();
+
+    setTimeout(() => showGameOver(score, isNew), 1600);
+
+  } else if (val < secret) {
+    hintText = 'ສູງກວ່ານັ້ນ! ➚';
+    hintClass = 'low';
+    hintShort = 'ສູງກວ່ານັ້ນ ➚';
+    lo = Math.max(lo, val + 1);
+    tone(280, 160, 'sine', 0.1);
+  } else {
+    hintText = 'ຕ່ຳກວ່ານັ້ນ! ➘';
+    hintClass = 'high';
+    hintShort = 'ຕ່ຳກວ່ານັ້ນ ➘';
+    hi = Math.min(hi, val - 1);
+    tone(200, 160, 'sine', 0.1);
+  }
+
+  hintBox.className = 'hint-box ' + hintClass;
+  hintBox.textContent = hintText;
+  addHistoryItem(val, hintClass, hintShort);
+
+  if (val !== secret) {
+    updateRange();
+    updateAttempts();
+    setTimeout(() => document.getElementById('guessInput').focus(), 50);
+  }
+}
+
+function addHistoryItem(num, cls, hint) {
+  const wrap = document.getElementById('historyWrap');
+  const item = document.createElement('div');
+  item.className = 'history-item ' + cls;
+  item.innerHTML = `<span class="h-num">${num}</span><span class="h-hint">${hint}</span>`;
+  wrap.insertBefore(item, wrap.firstChild);
+}
+
+function showGameOver(score, isNew) {
+  document.getElementById('ovScore').textContent = score;
+  document.getElementById('ovBest').textContent = getHS();
+  document.getElementById('ovAttempts').textContent = attempts + ' ຄັ້ງ';
+  document.getElementById('ovSub').textContent = `ທ່ານໃຊ້ ${attempts} ຄັ້ງ ໃນການທາຍ`;
+  document.getElementById('newRecord').classList.toggle('hidden', !isNew);
+  document.getElementById('gameOverOverlay').classList.remove('hidden');
+}
+
+document.getElementById('guessInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitGuess();
+});
+
+// Init header
+(function init() {
+  const hs = getHS();
+  document.getElementById('bestDisplay').textContent = hs;
+  document.getElementById('startBestVal').textContent = hs > 0 ? hs : '-';
+})();
+</script>
+</body>
+</html>
