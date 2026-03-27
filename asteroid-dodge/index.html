@@ -326,7 +326,7 @@
     }
   }
 
-  let raf=null;
+  const SPEED_INCREMENT = 0.1, MAX_ASTEROID_LIMIT = 8;
   function loop(){
     if(!running) return;
 
@@ -337,13 +337,13 @@
 
     // Speed ramp every 5s
     if(now-lastSpeedUp>5000){
-      asteroidSpeed+=0.1;
+      asteroidSpeed+=SPEED_INCREMENT;
       asteroids.forEach(a=>a.speed=asteroidSpeed);
       lastSpeedUp=now;
     }
     // More asteroids every 15s
     if(now-lastCountUp>15000){
-      maxAsteroids=Math.min(maxAsteroids+1,8);
+      maxAsteroids=Math.min(maxAsteroids+1,MAX_ASTEROID_LIMIT);
       lastCountUp=now;
     }
 
