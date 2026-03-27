@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ຈຳສີ - Simon Says</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0f0f1a; --bg-glass:rgba(255,255,255,0.08); --border-glass:rgba(255,255,255,0.12);
+      --text:#f0f0f5; --text2:#a0a0b8; --accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);
+      --glow:rgba(124,58,237,0.3); --success:#10B981; --font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif;
+    }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+    body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+    .overlay{position:fixed;inset:0;z-index:100;background:rgba(15,15,26,0.92);backdrop-filter:blur(16px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;transition:opacity 0.4s}
+    .overlay.hidden{opacity:0;pointer-events:none}
+    .ov-emoji{font-size:3.5rem;margin-bottom:12px;animation:bounceIn 0.5s ease}
+    .ov-title{font-size:2.2rem;font-weight:800;text-align:center;margin-bottom:6px}
+    .ov-sub{font-size:0.95rem;color:var(--text2);text-align:center;margin-bottom:24px;max-width:300px}
+    @keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 36px;border:none;border-radius:999px;font-family:var(--font);font-size:1.1rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:200px}
+    .btn:active{transform:scale(0.96)}
+    .btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}
+    .btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}
+    .btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px;align-items:center}
+    .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}
+    .stat-item{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}
+    .stat-value{font-size:1.8rem;font-weight:700}
+    .stat-value.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .stat-label{font-size:0.7rem;color:var(--text2);margin-top:4px}
+    .new-record{display:inline-flex;gap:6px;padding:4px 14px;border-radius:999px;font-size:0.8rem;font-weight:600;background:rgba(16,185,129,0.15);color:var(--success);margin-bottom:16px}
+    .new-record.hidden{display:none}
+    .game-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;z-index:10}
+    .back-btn{width:40px;height:40px;border-radius:50%;background:var(--bg-glass);border:1px solid var(--border-glass);color:var(--text);font-size:1.2rem;display:flex;align-items:center;justify-content:center;text-decoration:none;cursor:pointer}
+    .game-title{font-size:1rem;font-weight:700}
+    .scores{display:flex;gap:14px}
+    .score-box{text-align:center}
+    .score-lbl{font-size:0.55rem;color:var(--text2)}
+    .score-val{font-size:1rem;font-weight:700}
+    .score-val.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .sound-btn{position:fixed;top:12px;right:12px;z-index:200;width:40px;height:40px;padding:0;border-radius:50%;font-size:1.1rem;background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass);cursor:pointer;touch-action:manipulation}
+    .start-best{margin-top:16px;text-align:center}
+    .start-best-lbl{font-size:0.7rem;color:var(--text2)}
+    .start-best-val{font-size:1.3rem;font-weight:700;background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+    /* Game-specific */
+    #gameArea{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:20px}
+    .status-bar{text-align:center}
+    .status-text{font-size:1.1rem;font-weight:600;min-height:1.5rem}
+    .status-progress{font-size:0.8rem;color:var(--text2);margin-top:4px;min-height:1.2rem}
+    .round-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:999px;font-size:0.85rem;font-weight:600;background:var(--bg-glass);border:1px solid var(--border-glass)}
+    .btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:320px}
+    .color-btn{width:100%;aspect-ratio:1;border-radius:20px;border:3px solid transparent;font-family:var(--font);font-size:1.2rem;font-weight:700;color:white;cursor:pointer;touch-action:manipulation;transition:transform 0.1s,filter 0.1s,border-color 0.1s;text-shadow:0 1px 3px rgba(0,0,0,0.5);position:relative;overflow:hidden}
+    .color-btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);transition:background 0.1s;border-radius:17px}
+    .color-btn:active{transform:scale(0.94)}
+    .color-btn.dimmed{filter:brightness(0.35)}
+    .color-btn.lit{filter:brightness(1.6);transform:scale(1.06);border-color:rgba(255,255,255,0.7);box-shadow:0 0 30px currentColor}
+    .color-btn.lit::after{background:rgba(255,255,255,0.18)}
+    .color-btn.player-pressed{filter:brightness(1.4);transform:scale(0.94)}
+    .color-btn[data-c="red"]{background:#EF4444}
+    .color-btn[data-c="blue"]{background:#3B82F6}
+    .color-btn[data-c="green"]{background:#22C55E}
+    .color-btn[data-c="yellow"]{background:#F59E0B}
+  </style>
+</head>
+<body>
+
+<!-- Start Overlay -->
+<div class="overlay" id="startScr">
+  <div class="ov-emoji">🎨</div>
+  <div class="ov-title">ຈຳສີ</div>
+  <div class="ov-sub">ຈຳລຳດັບສີ ແລ້ວຄວ້າ!</div>
+  <div class="start-best">
+    <div class="start-best-lbl">ຄະແນນສູງສຸດ</div>
+    <div class="start-best-val" id="startBest">0</div>
+  </div>
+  <div class="btn-group" style="margin-top:24px">
+    <button class="btn btn-primary" onclick="startGame()">🎮 ເລີ່ມຫຼິ້ນ</button>
+    <a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ໜ້າຫຼັກ</a>
+  </div>
+</div>
+
+<!-- Game Over Overlay -->
+<div class="overlay hidden" id="overScr">
+  <div class="ov-emoji" id="overEmoji">😢</div>
+  <div class="ov-title">ຈົບເກມ</div>
+  <div class="new-record hidden" id="nrBadge">🏆 ສະຖິຕິໃໝ່!</div>
+  <div class="stats-grid">
+    <div class="stat-item"><div class="stat-value" id="fScore">0</div><div class="stat-label">ຮອບ</div></div>
+    <div class="stat-item"><div class="stat-value best" id="fBest">0</div><div class="stat-label">ດີທີ່ສຸດ</div></div>
+  </div>
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="startGame()">🔄 ລອງໃໝ່</button>
+    <a href="../index.html" class="btn btn-secondary" style="text-decoration:none">🏠 ກັບໜ້າຫຼັກ</a>
+  </div>
+</div>
+
+<!-- Game Header -->
+<div class="game-header" id="gameHeader">
+  <a href="../index.html" class="back-btn">←</a>
+  <div class="game-title">🎨 ຈຳສີ</div>
+  <div class="scores">
+    <div class="score-box"><div class="score-lbl">ຮອບ</div><div class="score-val" id="scoreDisp">0</div></div>
+    <div class="score-box"><div class="score-lbl">ດີສຸດ</div><div class="score-val best" id="bestDisp">0</div></div>
+  </div>
+</div>
+
+<!-- Sound Button -->
+<button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+<!-- Game Area -->
+<div id="gameArea">
+  <div class="status-bar">
+    <div class="status-text" id="statusText">ກຽມພ້ອມ...</div>
+    <div class="status-progress" id="statusProg"></div>
+  </div>
+  <div class="round-badge">ຮອບ: <span id="roundDisp">0</span></div>
+  <div class="btn-grid">
+    <button class="color-btn" data-c="red"   data-i="0" onclick="playerTap(0)">ແດງ</button>
+    <button class="color-btn" data-c="blue"  data-i="1" onclick="playerTap(1)">ຟ້າ</button>
+    <button class="color-btn" data-c="green" data-i="2" onclick="playerTap(2)">ຂຽວ</button>
+    <button class="color-btn" data-c="yellow" data-i="3" onclick="playerTap(3)">ເຫຼືອງ</button>
+  </div>
+</div>
+
+<script>
+  const GID = 'simon-says';
+  function sv(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+  function ld(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+  function getHS(){return ld('hs',0)}
+  function updHS(s){const b=getHS();if(s>b){sv('hs',s);return true}return false}
+
+  let aC=null, snd=true;
+  function initA(){if(!aC)aC=new(window.AudioContext||window.webkitAudioContext)();if(aC.state==='suspended')aC.resume()}
+  function tone(f,d,t='sine',v=0.14){
+    if(!snd||!aC)return;
+    if(aC.state==='suspended'){aC.resume().then(()=>tone(f,d,t,v));return;}
+    try{
+      const o=aC.createOscillator(),g=aC.createGain();
+      o.type=t;o.frequency.value=f;
+      g.gain.setValueAtTime(v,aC.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,aC.currentTime+d/1000);
+      o.connect(g);g.connect(aC.destination);o.start();o.stop(aC.currentTime+d/1000);
+    }catch(e){}
+  }
+  function toggleSound(){snd=!snd;document.getElementById('soundBtn').textContent=snd?'🔊':'🔇'}
+  (function(){function u(){initA();document.removeEventListener('touchstart',u,true)}document.addEventListener('touchstart',u,true)})();
+
+  const COLORS = ['red','blue','green','yellow'];
+  const FREQS  = [261, 329, 392, 523];
+  const STEP_MS = 600, GAP_MS = 400;
+
+  let sequence=[], playerIdx=0, round=0, playing=false, accepting=false;
+
+  function $(id){return document.getElementById(id)}
+  function btns(){return document.querySelectorAll('.color-btn')}
+
+  function refreshBest(){
+    const h=getHS();
+    $('startBest').textContent=h;
+    $('bestDisp').textContent=h;
+  }
+
+  function setStatus(txt,prog=''){
+    $('statusText').textContent=txt;
+    $('statusProg').textContent=prog;
+  }
+
+  function dimAll(){btns().forEach(b=>{b.classList.remove('lit','player-pressed');b.classList.add('dimmed')})}
+  function undimAll(){btns().forEach(b=>{b.classList.remove('lit','dimmed','player-pressed')})}
+
+  function litBtn(i, duration){
+    return new Promise(res=>{
+      const b=document.querySelector(`.color-btn[data-i="${i}"]`);
+      dimAll();
+      b.classList.remove('dimmed');
+      b.classList.add('lit');
+      tone(FREQS[i], duration*0.8);
+      setTimeout(()=>{
+        b.classList.remove('lit');
+        dimAll();
+        setTimeout(()=>{undimAll();res()},GAP_MS);
+      },duration);
+    });
+  }
+
+  async function playSequence(){
+    playing=true;accepting=false;
+    setStatus('ເບິ່ງ...','');
+    await delay(600);
+    for(let i=0;i<sequence.length;i++){
+      await litBtn(sequence[i], STEP_MS);
+    }
+    undimAll();
+    playing=false;accepting=true;
+    playerIdx=0;
+    setStatus('ທ່ານ!',`0 / ${sequence.length}`);
+  }
+
+  function delay(ms){return new Promise(r=>setTimeout(r,ms))}
+
+  function startGame(){
+    initA();
+    hideOverlay('startScr');
+    hideOverlay('overScr');
+    sequence=[];playerIdx=0;round=0;playing=false;accepting=false;
+    refreshBest();
+    undimAll();
+    $('roundDisp').textContent='0';
+    $('scoreDisp').textContent='0';
+    setStatus('ກຽມພ້ອມ...','');
+    setTimeout(nextRound, 800);
+  }
+
+  function nextRound(){
+    round++;
+    $('roundDisp').textContent=round;
+    $('scoreDisp').textContent=round-1;
+    sequence.push(Math.floor(Math.random()*4));
+    playSequence();
+  }
+
+  function playerTap(i){
+    if(!accepting||playing)return;
+    initA();
+    const b=document.querySelector(`.color-btn[data-i="${i}"]`);
+    b.classList.add('player-pressed');
+    tone(FREQS[i],200);
+    setTimeout(()=>b.classList.remove('player-pressed'),180);
+
+    if(sequence[playerIdx]!==i){
+      // Wrong
+      accepting=false;
+      tone(150,600,'sawtooth',0.12);
+      dimAll();
+      setTimeout(()=>{
+        undimAll();
+        endGame();
+      },700);
+      return;
+    }
+
+    playerIdx++;
+    setStatus('ທ່ານ!',`${playerIdx} / ${sequence.length}`);
+
+    if(playerIdx===sequence.length){
+      // Correct round
+      accepting=false;
+      setStatus('ຖືກ! 🎉','');
+      tone(600,100,'sine',0.1);
+      setTimeout(()=>tone(800,150,'sine',0.1),120);
+      setTimeout(nextRound, 900);
+    }
+  }
+
+  function endGame(){
+    const score=round-1;
+    $('scoreDisp').textContent=score;
+    const isNew=updHS(score);
+    const best=getHS();
+    $('fScore').textContent=score;
+    $('fBest').textContent=best;
+    $('overEmoji').textContent=score>=5?'🎉':'😢';
+    $('nrBadge').classList.toggle('hidden',!isNew);
+    $('bestDisp').textContent=best;
+    showOverlay('overScr');
+  }
+
+  function showOverlay(id){$(id).classList.remove('hidden')}
+  function hideOverlay(id){$(id).classList.add('hidden')}
+
+  refreshBest();
+</script>
+</body>
+</html>

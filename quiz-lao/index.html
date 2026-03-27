@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ຄຳຖາມ</title>
+<style>
+:root {
+  --bg: #0f0f1a;
+  --bg-glass: rgba(255,255,255,0.08);
+  --border-glass: rgba(255,255,255,0.12);
+  --text: #f0f0f5;
+  --text2: #a0a0b8;
+  --accent-grad: linear-gradient(135deg,#7C3AED,#2563EB);
+  --glow: rgba(124,58,237,0.3);
+  --success: #10B981;
+  --font: 'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box }
+html { font-size:16px; -webkit-text-size-adjust:100%; -webkit-tap-highlight-color:transparent }
+body { font-family:var(--font); background:var(--bg); color:var(--text); height:100vh; height:100dvh; overflow:hidden; overscroll-behavior:none; user-select:none; -webkit-user-select:none; display:flex; flex-direction:column }
+.overlay { position:fixed; inset:0; z-index:100; background:rgba(15,15,26,0.92); backdrop-filter:blur(16px); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px 20px; transition:opacity 0.4s }
+.overlay.hidden { opacity:0; pointer-events:none }
+.ov-emoji { font-size:3.5rem; margin-bottom:12px; animation:bounceIn 0.5s ease }
+.ov-title { font-size:2.2rem; font-weight:800; text-align:center; margin-bottom:6px }
+.ov-sub { font-size:0.95rem; color:var(--text2); text-align:center; margin-bottom:24px; max-width:300px }
+@keyframes bounceIn { 0%{transform:scale(0)} 50%{transform:scale(1.2)} 100%{transform:scale(1)} }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:14px 36px; border:none; border-radius:999px; font-family:var(--font); font-size:1.1rem; font-weight:600; cursor:pointer; transition:all 0.25s; touch-action:manipulation; min-width:200px }
+.btn:active { transform:scale(0.96) }
+.btn-primary { background:var(--accent-grad); color:white; box-shadow:0 0 20px var(--glow) }
+.btn-secondary { background:var(--bg-glass); color:var(--text); border:1px solid var(--border-glass) }
+.btn-group { display:flex; flex-direction:column; gap:12px; width:100%; max-width:260px; align-items:center }
+.stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; width:100%; max-width:300px; margin-bottom:24px }
+.stat-item { text-align:center; padding:14px 8px; background:var(--bg-glass); border:1px solid var(--border-glass); border-radius:12px }
+.stat-value { font-size:1.8rem; font-weight:700 }
+.stat-value.best { background:var(--accent-grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text }
+.stat-label { font-size:0.7rem; color:var(--text2); margin-top:4px }
+.new-record { display:inline-flex; gap:6px; padding:4px 14px; border-radius:999px; font-size:0.8rem; font-weight:600; background:rgba(16,185,129,0.15); color:var(--success); margin-bottom:16px }
+.new-record.hidden { display:none }
+.game-header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; z-index:10 }
+.back-btn { width:40px; height:40px; border-radius:50%; background:var(--bg-glass); border:1px solid var(--border-glass); color:var(--text); font-size:1.2rem; display:flex; align-items:center; justify-content:center; text-decoration:none; cursor:pointer }
+.game-title { font-size:1rem; font-weight:700 }
+.scores { display:flex; gap:14px }
+.score-box { text-align:center }
+.score-lbl { font-size:0.55rem; color:var(--text2) }
+.score-val { font-size:1rem; font-weight:700 }
+.score-val.best { background:var(--accent-grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text }
+.sound-btn { position:fixed; top:12px; right:12px; z-index:200; width:40px; height:40px; padding:0; border-radius:50%; font-size:1.1rem; background:var(--bg-glass); color:var(--text); border:1px solid var(--border-glass); cursor:pointer; touch-action:manipulation }
+.start-best { margin-top:16px; text-align:center }
+.start-best-lbl { font-size:0.7rem; color:var(--text2) }
+.start-best-val { font-size:1.3rem; font-weight:700; background:var(--accent-grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text }
+
+/* Quiz-specific */
+.progress-row { display:flex; align-items:center; justify-content:center; gap:5px; padding:6px 16px }
+.prog-dot { width:26px; height:7px; border-radius:4px; background:var(--bg-glass); border:1px solid var(--border-glass); transition:all 0.3s }
+.prog-dot.active { background:rgba(124,58,237,0.45); border-color:rgba(124,58,237,0.7) }
+.prog-dot.correct { background:var(--success); border-color:var(--success) }
+.prog-dot.wrong { background:#EF4444; border-color:#EF4444 }
+.prog-dot.timeout { background:#6B7280; border-color:#6B7280 }
+
+.timer-wrap { padding:0 16px 6px; }
+.timer-bar-outer { width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:999px; overflow:hidden }
+.timer-bar-inner { height:100%; border-radius:999px; background:var(--accent-grad); transition:width linear }
+.timer-bar-inner.warning { background:linear-gradient(135deg,#EF4444,#F97316) }
+
+.q-area { flex:1; display:flex; flex-direction:column; padding:8px 16px 12px; overflow:hidden }
+.q-meta { font-size:0.75rem; color:var(--text2); text-align:center; margin-bottom:8px }
+.q-card { background:var(--bg-glass); border:1px solid var(--border-glass); border-radius:20px; padding:18px 18px; font-size:1.05rem; font-weight:700; text-align:center; line-height:1.55; margin-bottom:12px; flex-shrink:0 }
+.options-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; flex:1; align-content:start }
+.opt-btn { display:flex; align-items:center; gap:9px; padding:12px 12px; background:var(--bg-glass); border:1.5px solid var(--border-glass); border-radius:14px; color:var(--text); font-family:var(--font); font-size:0.88rem; font-weight:600; cursor:pointer; text-align:left; touch-action:manipulation; transition:background 0.2s, border-color 0.2s, color 0.2s; line-height:1.3; width:100% }
+.opt-btn:not(:disabled):active { transform:scale(0.97) }
+.opt-label { width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:0.72rem; font-weight:700; flex-shrink:0; transition:background 0.2s }
+.opt-btn.correct { background:rgba(16,185,129,0.18); border-color:var(--success); color:var(--success) }
+.opt-btn.correct .opt-label { background:var(--success); color:white }
+.opt-btn.wrong { background:rgba(239,68,68,0.14); border-color:#EF4444; color:#F87171 }
+.opt-btn.wrong .opt-label { background:#EF4444; color:white }
+.opt-btn:disabled { cursor:default }
+
+/* End overlay extras */
+.result-summary { font-size:0.88rem; color:var(--text2); text-align:center; margin-bottom:20px }
+.result-correct { color:var(--success); font-weight:700 }
+</style>
+</head>
+<body>
+
+<button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+<!-- Start Overlay -->
+<div class="overlay" id="startOverlay">
+  <div class="ov-emoji">🧠</div>
+  <div class="ov-title">ຄຳຖາມ</div>
+  <div class="ov-sub">ທົດສອບຄວາມຮູ້ຂອງທ່ານ!</div>
+  <div class="start-best">
+    <div class="start-best-lbl">ຄະແນນດີສຸດ</div>
+    <div class="start-best-val" id="startBestVal">-</div>
+  </div>
+  <div style="margin-top:24px" class="btn-group">
+    <button class="btn btn-primary" onclick="startGame()">▶ ເລີ່ມຫຼິ້ນ</button>
+    <a href="../index.html" class="btn btn-secondary">🏠 ໜ້າຫຼັກ</a>
+  </div>
+</div>
+
+<!-- Game Over Overlay -->
+<div class="overlay hidden" id="gameOverOverlay">
+  <div class="ov-emoji" id="ovEmoji">🎉</div>
+  <div class="ov-title" id="ovTitle">ຈົບແລ້ວ!</div>
+  <div class="result-summary" id="ovSummary"></div>
+  <div class="new-record hidden" id="newRecord">⭐ ສະຖິຕິໃໝ່!</div>
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-value" id="ovScore">0</div>
+      <div class="stat-label">ຄະແນນ</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value best" id="ovBest">0</div>
+      <div class="stat-label">ດີສຸດ</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="ovCorrect">0</div>
+      <div class="stat-label">ຕອບຖືກ</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="ovWrong">0</div>
+      <div class="stat-label">ຕອບຜິດ / ໝົດເວລາ</div>
+    </div>
+  </div>
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="startGame()">▶ ຫຼິ້ນໃໝ່</button>
+    <a href="../index.html" class="btn btn-secondary">🏠 ໜ້າຫຼັກ</a>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="game-header">
+  <a href="../index.html" class="back-btn">←</a>
+  <div class="game-title">ຄຳຖາມ</div>
+  <div class="scores">
+    <div class="score-box">
+      <div class="score-lbl">ຄະແນນ</div>
+      <div class="score-val" id="scoreDisplay">0</div>
+    </div>
+    <div class="score-box">
+      <div class="score-lbl">ດີສຸດ</div>
+      <div class="score-val best" id="bestDisplay">0</div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress dots -->
+<div class="progress-row" id="progressRow"></div>
+
+<!-- Timer bar -->
+<div class="timer-wrap">
+  <div class="timer-bar-outer">
+    <div class="timer-bar-inner" id="timerBar" style="width:100%"></div>
+  </div>
+</div>
+
+<!-- Question area -->
+<div class="q-area">
+  <div class="q-meta" id="qMeta">ຄຳຖາມ 1/10</div>
+  <div class="q-card" id="qText"></div>
+  <div class="options-grid" id="optionsGrid"></div>
+</div>
+
+<script>
+const GID = 'quiz-lao';
+function sv(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function ld(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function getHS(){return ld('hs',0)}
+function updHS(s){const b=getHS();if(s>b){sv('hs',s);return true}return false}
+
+let aC=null, snd=true;
+function initA(){if(!aC)aC=new(window.AudioContext||window.webkitAudioContext)();if(aC.state==='suspended')aC.resume()}
+function tone(f,d,t='sine',v=0.12){if(!snd||!aC)return;try{const o=aC.createOscillator(),g=aC.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,aC.currentTime+d/1000);o.connect(g);g.connect(aC.destination);o.start();o.stop(aC.currentTime+d/1000)}catch(e){}}
+function toggleSound(){snd=!snd;document.getElementById('soundBtn').textContent=snd?'🔊':'🔇'}
+(function(){function u(){initA();document.removeEventListener('touchstart',u,true)}document.addEventListener('touchstart',u,true)})();
+
+const QUESTIONS = [
+  { q:"ສັດໃດໃຫຍ່ທີ່ສຸດໃນໂລກ?",        opts:["ຊ້າງ","ປາວານ","ຍີລາຟ","ໄດໂນເສົາ"],        ans:1 },
+  { q:"ດອກໄມ້ຊາດລາວແມ່ນຫຍັງ?",         opts:["ດອກກຸຫຼາບ","ດອກບົວ","ດອກຈຳປາ","ດອກດາວເຮືອງ"],   ans:2 },
+  { q:"ນ້ຳຕົກທີ່ໃຫຍ່ທີ່ສຸດໃນໂລກ?",       opts:["ນ້ຳຕົກໂຄນ","ນ້ຳຕົກໄນອາກາລ","ນ້ຳຕົກວິກໂຕເລຍ","ນ້ຳຕົກຕຣ"], ans:2 },
+  { q:"ດາວເຄາະໃດໃຫຍ່ທີ່ສຸດໃນລະບົບສຸລິຍະ?", opts:["ດາວເສົາ","ດາວພຶກ","ດາວອັງຄານ","ດາວໂລກ"],       ans:1 },
+  { q:"2 × 8 ເທົ່າກັບ?",               opts:["14","15","16","18"],                         ans:2 },
+  { q:"ນ້ຳທະເລມີລົດຊາດຫຍັງ?",           opts:["ຫວານ","ຂົມ","ເຄັມ","ສົ້ມ"],                  ans:2 },
+  { q:"ສີໃດທີ່ຟ້າ ແລະ ເຫຼືອງ ຜະສົມກັນ?",  opts:["ສົ້ມ","ຂຽວ","ມ່ວງ","ຊົມພູ"],                  ans:1 },
+  { q:"ໝາກໃດມີສີເຫຼືອງ?",               opts:["ໝາກນັດ","ໝາກໂມ","ໝາກເດືອຍ","ໝາກກ້ວຍ"],          ans:3 },
+  { q:"ສັດໃດອາໄສຢູ່ໃນທະເລ?",            opts:["ສິງໂຕ","ຊ້າງ","ປາໂລຣ້າ","ໝູ"],                ans:2 },
+  { q:"ປີໃໝ່ລາວ (ສົງການ) ແມ່ນໃນເດືອນໃດ?", opts:["ເດືອນ 1","ເດືອນ 3","ເດືອນ 4","ເດືອນ 5"],       ans:2 },
+  { q:"12 ÷ 4 ເທົ່າກັບ?",              opts:["2","3","4","5"],                             ans:1 },
+  { q:"ສີຂຽວ ມາຈາກການຜະສົມສີໃດ?",       opts:["ແດງ+ຟ້າ","ຟ້າ+ເຫຼືອງ","ແດງ+ເຫຼືອງ","ຂາວ+ດຳ"],      ans:1 },
+  { q:"ສັດໃດບິນໄດ້?",                   opts:["ໝາ","ແມວ","ນົກ","ງູ"],                       ans:2 },
+  { q:"ໝາກໃດທີ່ຄົນລາວຊອບກິນຫຼາຍ?",      opts:["ໝາກຂາມ","ໝາກນາວ","ໝາກໄຂ່ໝາກ","ໝາກໂມ"],          ans:0 },
+  { q:"ສູນອະນຸລັກຊ້າງລາວຢູ່ທີ່ໃດ?",      opts:["ຫຼວງພະບາງ","ໄຊຍະບູລີ","ວຽງຈັນ","ຈຳປາສັກ"],       ans:1 },
+  { q:"ຕົ້ນໄມ້ສູງທີ່ສຸດໃນໂລກ?",          opts:["ຕົ້ນຕານ","ຕົ້ນໄຜ່","ຕົ້ນ Sequoia","ຕົ້ນໝາກພ້າວ"],   ans:2 },
+  { q:"5 + 7 ເທົ່າກັບ?",               opts:["10","11","12","13"],                         ans:2 },
+  { q:"ສີ 7 ສີ ຂອງຮຸ້ງ ເລີ່ມດ້ວຍສີໃດ?",  opts:["ສີໂຕຊ","ສີແດງ","ສີຟ້າ","ສີຂຽວ"],               ans:1 },
+  { q:"ສັດໃດມີເຂັມ (ຮ່ວງ)?",             opts:["ຜີເສືອ","ຜຶ້ງ","ໄກ່","ໝາ"],                   ans:1 },
+  { q:"ສັດໃດວ່ອງໄວທີ່ສຸດໃນໂລກ?",        opts:["ຊ້າງ","ໝາ","ຊີຕ້າ","ສິງໂຕ"],                  ans:2 },
+];
+
+const TIMER_MS = 15000;
+const QUESTIONS_PER_GAME = 10;
+const LABELS = ['A','B','C','D'];
+
+let gameQ = [], qIndex = 0, score = 0, correctCount = 0;
+let timerStart, timerRAF, timerActive = false;
+let answered = false;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startGame() {
+  gameQ = shuffle(QUESTIONS).slice(0, QUESTIONS_PER_GAME);
+  qIndex = 0; score = 0; correctCount = 0;
+
+  document.getElementById('startOverlay').classList.add('hidden');
+  document.getElementById('gameOverOverlay').classList.add('hidden');
+  document.getElementById('scoreDisplay').textContent = '0';
+  document.getElementById('bestDisplay').textContent = getHS();
+
+  buildProgressDots();
+  initA();
+  showQuestion();
+}
+
+function buildProgressDots() {
+  const row = document.getElementById('progressRow');
+  row.innerHTML = '';
+  for (let i = 0; i < QUESTIONS_PER_GAME; i++) {
+    const d = document.createElement('div');
+    d.className = 'prog-dot' + (i === 0 ? ' active' : '');
+    d.id = 'dot' + i;
+    row.appendChild(d);
+  }
+}
+
+function showQuestion() {
+  answered = false;
+  const q = gameQ[qIndex];
+  document.getElementById('qMeta').textContent = `ຄຳຖາມ ${qIndex + 1}/${QUESTIONS_PER_GAME}`;
+  document.getElementById('qText').textContent = q.q;
+
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.id = 'opt' + i;
+    btn.innerHTML = `<span class="opt-label">${LABELS[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => handleAnswer(i);
+    grid.appendChild(btn);
+  });
+
+  // Mark current dot active
+  const dot = document.getElementById('dot' + qIndex);
+  if (dot) dot.className = 'prog-dot active';
+
+  startTimer();
+}
+
+function startTimer() {
+  stopTimer();
+  timerActive = true;
+  timerStart = performance.now();
+  const bar = document.getElementById('timerBar');
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  bar.className = 'timer-bar-inner';
+
+  function tick(now) {
+    if (!timerActive) return;
+    const elapsed = now - timerStart;
+    const pct = Math.max(0, 1 - elapsed / TIMER_MS) * 100;
+    bar.style.width = pct + '%';
+    if (pct <= 30) bar.className = 'timer-bar-inner warning';
+    if (elapsed >= TIMER_MS) {
+      timerActive = false;
+      handleTimeout();
+      return;
+    }
+    timerRAF = requestAnimationFrame(tick);
+  }
+  timerRAF = requestAnimationFrame(tick);
+}
+
+function stopTimer() {
+  timerActive = false;
+  if (timerRAF) cancelAnimationFrame(timerRAF);
+}
+
+function handleAnswer(chosen) {
+  if (answered) return;
+  answered = true;
+  stopTimer();
+  initA();
+
+  const q = gameQ[qIndex];
+  const isCorrect = chosen === q.ans;
+
+  // Freeze timer bar
+  const bar = document.getElementById('timerBar');
+  bar.style.transition = 'none';
+
+  // Style buttons
+  for (let i = 0; i < q.opts.length; i++) {
+    const btn = document.getElementById('opt' + i);
+    if (!btn) continue;
+    btn.disabled = true;
+    if (i === q.ans) {
+      btn.className = 'opt-btn correct';
+    } else if (i === chosen && !isCorrect) {
+      btn.className = 'opt-btn wrong';
+    }
+  }
+
+  if (isCorrect) {
+    score += 100;
+    correctCount++;
+    document.getElementById('scoreDisplay').textContent = score;
+    tone(660, 120); setTimeout(() => tone(880, 180), 130);
+    document.getElementById('dot' + qIndex).className = 'prog-dot correct';
+  } else {
+    tone(180, 250, 'sawtooth', 0.08);
+    document.getElementById('dot' + qIndex).className = 'prog-dot wrong';
+  }
+
+  setTimeout(advance, 1500);
+}
+
+function handleTimeout() {
+  if (answered) return;
+  answered = true;
+  initA();
+
+  const q = gameQ[qIndex];
+  // Show correct answer
+  for (let i = 0; i < q.opts.length; i++) {
+    const btn = document.getElementById('opt' + i);
+    if (!btn) continue;
+    btn.disabled = true;
+    if (i === q.ans) btn.className = 'opt-btn correct';
+  }
+  tone(160, 300, 'sawtooth', 0.08);
+  document.getElementById('dot' + qIndex).className = 'prog-dot timeout';
+  setTimeout(advance, 1500);
+}
+
+function advance() {
+  qIndex++;
+  if (qIndex >= QUESTIONS_PER_GAME) {
+    showGameOver();
+  } else {
+    showQuestion();
+  }
+}
+
+function showGameOver() {
+  stopTimer();
+  const isNew = updHS(score);
+  const hs = getHS();
+
+  document.getElementById('bestDisplay').textContent = hs;
+  document.getElementById('ovScore').textContent = score;
+  document.getElementById('ovBest').textContent = hs;
+  document.getElementById('ovCorrect').textContent = correctCount;
+  document.getElementById('ovWrong').textContent = QUESTIONS_PER_GAME - correctCount;
+  document.getElementById('ovSummary').innerHTML =
+    `ຕອບຖືກ <span class="result-correct">${correctCount}</span> / ${QUESTIONS_PER_GAME} ຂໍ້`;
+  document.getElementById('ovEmoji').textContent =
+    correctCount >= 8 ? '🏆' : correctCount >= 5 ? '👍' : '😅';
+  document.getElementById('newRecord').classList.toggle('hidden', !isNew);
+
+  if (isNew) {
+    [440,554,659,880].forEach((f,i) => setTimeout(() => tone(f,180), i*120));
+  }
+
+  document.getElementById('gameOverOverlay').classList.remove('hidden');
+}
+
+// Init
+(function init() {
+  const hs = getHS();
+  document.getElementById('bestDisplay').textContent = hs;
+  document.getElementById('startBestVal').textContent = hs > 0 ? hs : '-';
+})();
+</script>
+</body>
+</html>

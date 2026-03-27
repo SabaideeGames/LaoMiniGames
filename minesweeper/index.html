@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ຂຸດລະເບີດ – LaoMiniGames</title>
+<style>
+:root {
+  --bg: #0f0f1a;
+  --bg-glass: rgba(255,255,255,0.08);
+  --border-glass: rgba(255,255,255,0.12);
+  --text: #f0f0f5;
+  --text2: #a0a0b8;
+  --accent-grad: linear-gradient(135deg,#7C3AED,#2563EB);
+  --glow: rgba(124,58,237,0.3);
+  --success: #10B981;
+  --font: 'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+.overlay{position:fixed;inset:0;z-index:100;background:rgba(15,15,26,0.92);backdrop-filter:blur(16px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;transition:opacity 0.4s}
+.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:3.5rem;margin-bottom:12px;animation:bounceIn 0.5s ease}
+.ov-title{font-size:2.2rem;font-weight:800;text-align:center;margin-bottom:6px}
+.ov-sub{font-size:0.95rem;color:var(--text2);text-align:center;margin-bottom:24px;max-width:300px}
+@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 36px;border:none;border-radius:999px;font-family:var(--font);font-size:1.1rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:200px}
+.btn:active{transform:scale(0.96)}
+.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}
+.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}
+.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px;align-items:center}
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}
+.stat-item{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}
+.stat-value{font-size:1.8rem;font-weight:700}
+.stat-value.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-label{font-size:0.7rem;color:var(--text2);margin-top:4px}
+.new-record{display:inline-flex;gap:6px;padding:4px 14px;border-radius:999px;font-size:0.8rem;font-weight:600;background:rgba(16,185,129,0.15);color:var(--success);margin-bottom:16px}
+.new-record.hidden{display:none}
+.game-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;z-index:10;flex-shrink:0}
+.back-btn{width:40px;height:40px;border-radius:50%;background:var(--bg-glass);border:1px solid var(--border-glass);color:var(--text);font-size:1.2rem;display:flex;align-items:center;justify-content:center;text-decoration:none;cursor:pointer}
+.game-title{font-size:1rem;font-weight:700}
+.scores{display:flex;gap:14px}
+.score-box{text-align:center}
+.score-lbl{font-size:0.55rem;color:var(--text2)}
+.score-val{font-size:1rem;font-weight:700}
+.score-val.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sound-btn{position:fixed;top:12px;right:12px;z-index:200;width:40px;height:40px;padding:0;border-radius:50%;font-size:1.1rem;background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass);cursor:pointer;touch-action:manipulation}
+.start-best{margin-top:16px;text-align:center}
+.start-best-lbl{font-size:0.7rem;color:var(--text2)}
+.start-best-val{font-size:1.3rem;font-weight:700;background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* ── Board ─────────────────────────────────── */
+#boardWrap{flex:1;display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden}
+#board{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  gap:3px;
+  width:min(calc(100vw - 16px),calc(100dvh - 120px));
+  height:min(calc(100vw - 16px),calc(100dvh - 120px));
+}
+.cell{
+  aspect-ratio:1;
+  border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(14px,3.5vw,22px);
+  font-weight:700;
+  cursor:pointer;
+  transition:transform 0.08s, background 0.15s;
+  touch-action:manipulation;
+  border:1px solid var(--border-glass);
+  background:var(--bg-glass);
+  box-shadow:0 2px 4px rgba(0,0,0,0.3);
+  position:relative;
+}
+.cell:active{transform:scale(0.92)}
+.cell.revealed{
+  background:rgba(255,255,255,0.04);
+  border-color:rgba(255,255,255,0.06);
+  box-shadow:none;
+}
+.cell.flagged{background:rgba(255,180,0,0.12);border-color:rgba(255,180,0,0.3)}
+.cell.mine-exploded{background:rgba(220,38,38,0.35);border-color:rgba(220,38,38,0.6)}
+.cell.mine-revealed{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1)}
+.n1{color:#3b82f6}
+.n2{color:#22c55e}
+.n3{color:#ef4444}
+.n4{color:#1e3a8a}
+.n5{color:#991b1b}
+.n6{color:#0d9488}
+.n7{color:#7c3aed}
+.n8{color:#6b7280}
+</style>
+</head>
+<body>
+
+<button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+<!-- Start Overlay -->
+<div class="overlay" id="startOverlay">
+  <div class="ov-emoji">💣</div>
+  <div class="ov-title">ຂຸດລະເບີດ</div>
+  <div class="ov-sub">ຊອກຫາ ແລະ ໝາຍລະເບີດ!</div>
+  <div class="start-best" id="startBestWrap">
+    <div class="start-best-lbl">ເວລາດີສຸດ</div>
+    <div class="start-best-val" id="startBestVal">–</div>
+  </div>
+  <div style="margin-top:24px" class="btn-group">
+    <button class="btn btn-primary" onclick="startGame()">▶ ເລີ່ມເກມ</button>
+    <a class="btn btn-secondary" href="../index.html">🏠 ໜ້າຫຼັກ</a>
+  </div>
+</div>
+
+<!-- Win Overlay -->
+<div class="overlay hidden" id="winOverlay">
+  <div class="ov-emoji">🎉</div>
+  <div class="ov-title">ຊະນະ!</div>
+  <div class="new-record hidden" id="newRecord">🏆 ສະຖິຕິໃໝ່!</div>
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-value" id="winTime">0s</div>
+      <div class="stat-label">ເວລາ</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value best" id="winBest">–</div>
+      <div class="stat-label">ດີສຸດ</div>
+    </div>
+  </div>
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="startGame()">🔄 ຫຼິ້ນອີກ</button>
+    <a class="btn btn-secondary" href="../index.html">🏠 ໜ້າຫຼັກ</a>
+  </div>
+</div>
+
+<!-- Lose Overlay -->
+<div class="overlay hidden" id="loseOverlay">
+  <div class="ov-emoji">💥</div>
+  <div class="ov-title">ຈົບເກມ!</div>
+  <div class="ov-sub">ທ່ານໂດນລະເບີດ!</div>
+  <div class="btn-group" style="margin-top:8px">
+    <button class="btn btn-primary" onclick="startGame()">🔄 ຫຼິ້ນອີກ</button>
+    <a class="btn btn-secondary" href="../index.html">🏠 ໜ້າຫຼັກ</a>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="game-header">
+  <a class="back-btn" href="../index.html">‹</a>
+  <div class="game-title">ຂຸດລະເບີດ 💣</div>
+  <div class="scores">
+    <div class="score-box">
+      <div class="score-lbl">💣 ທີ່ເຫຼືອ</div>
+      <div class="score-val" id="mineCount">10</div>
+    </div>
+    <div class="score-box">
+      <div class="score-lbl">⏱ ວິນາທີ</div>
+      <div class="score-val" id="timerVal">0</div>
+    </div>
+    <div class="score-box">
+      <div class="score-lbl">ດີສຸດ</div>
+      <div class="score-val best" id="bestVal">–</div>
+    </div>
+  </div>
+</div>
+
+<div id="boardWrap">
+  <div id="board"></div>
+</div>
+
+<script>
+// ── Storage ───────────────────────────────────────────────
+const GID = 'minesweeper';
+function sv(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function ld(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function getHS(){return ld('hs',0)}
+function updHS(t){const b=getHS();if(b===0||t<b){sv('hs',t);return true}return false}
+
+// ── Audio ─────────────────────────────────────────────────
+let aC=null,snd=true;
+function initA(){if(!aC)aC=new(window.AudioContext||window.webkitAudioContext)();if(aC.state==='suspended')aC.resume()}
+function tone(f,d,t='sine',v=0.12){if(!snd||!aC)return;try{const o=aC.createOscillator(),g=aC.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,aC.currentTime+d/1000);o.connect(g);g.connect(aC.destination);o.start();o.stop(aC.currentTime+d/1000)}catch(e){}}
+function toggleSound(){snd=!snd;document.getElementById('soundBtn').textContent=snd?'🔊':'🔇'}
+(function(){function u(){initA();document.removeEventListener('touchstart',u,true)}document.addEventListener('touchstart',u,true)})();
+
+// ── Constants ─────────────────────────────────────────────
+const ROWS = 8, COLS = 8, TOTAL_MINES = 10;
+
+// ── State ─────────────────────────────────────────────────
+let grid = [];       // {mine, adj, state: 'hidden'|'revealed'|'flagged'}
+let firstClick = true;
+let gameOver = false;
+let flagCount = 0;
+let revealedCount = 0;
+let timerVal = 0;
+let timerInterval = null;
+let longPressTimer = null;
+let longPressTriggered = false;
+
+function fmt(s){return s+'s'}
+function fmtBest(b){return b?b+'s':'–'}
+
+function initGrid() {
+  grid = [];
+  for (let i = 0; i < ROWS * COLS; i++) {
+    grid.push({ mine: false, adj: 0, state: 'hidden' });
+  }
+}
+
+function placeMines(safeIdx) {
+  let placed = 0;
+  const safe = new Set([safeIdx]);
+  // Also protect neighbors of first click
+  neighbors(safeIdx).forEach(n => safe.add(n));
+
+  while (placed < TOTAL_MINES) {
+    const idx = Math.floor(Math.random() * ROWS * COLS);
+    if (!safe.has(idx) && !grid[idx].mine) {
+      grid[idx].mine = true;
+      placed++;
+    }
+  }
+  // Calculate adjacency
+  for (let i = 0; i < ROWS * COLS; i++) {
+    if (!grid[i].mine) {
+      grid[i].adj = neighbors(i).filter(n => grid[n].mine).length;
+    }
+  }
+}
+
+function neighbors(idx) {
+  const r = Math.floor(idx / COLS), c = idx % COLS;
+  const result = [];
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      if (dr === 0 && dc === 0) continue;
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
+        result.push(nr * COLS + nc);
+      }
+    }
+  }
+  return result;
+}
+
+function reveal(idx) {
+  if (idx < 0 || idx >= ROWS * COLS) return;
+  const cell = grid[idx];
+  if (cell.state !== 'hidden') return;
+
+  cell.state = 'revealed';
+  revealedCount++;
+  renderCell(idx);
+
+  if (cell.adj === 0 && !cell.mine) {
+    neighbors(idx).forEach(n => reveal(n));
+  }
+}
+
+function renderCell(idx) {
+  const el = document.querySelector(`[data-idx="${idx}"]`);
+  if (!el) return;
+  const cell = grid[idx];
+
+  el.className = 'cell';
+  el.textContent = '';
+
+  if (cell.state === 'flagged') {
+    el.classList.add('flagged');
+    el.textContent = '🚩';
+  } else if (cell.state === 'hidden') {
+    // default glass style
+  } else if (cell.state === 'revealed') {
+    if (cell.mine) {
+      el.classList.add('mine-revealed');
+      el.textContent = '💣';
+    } else {
+      el.classList.add('revealed');
+      if (cell.adj > 0) {
+        el.textContent = cell.adj;
+        el.classList.add(`n${cell.adj}`);
+      }
+    }
+  } else if (cell.state === 'exploded') {
+    el.classList.add('mine-exploded');
+    el.textContent = '💥';
+  }
+}
+
+function renderAll() {
+  for (let i = 0; i < ROWS * COLS; i++) renderCell(i);
+}
+
+function updateMineCount() {
+  document.getElementById('mineCount').textContent = TOTAL_MINES - flagCount;
+}
+
+function startTimer() {
+  stopTimer();
+  timerVal = 0;
+  document.getElementById('timerVal').textContent = '0';
+  timerInterval = setInterval(() => {
+    timerVal++;
+    document.getElementById('timerVal').textContent = timerVal;
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+function checkWin() {
+  const nonMine = ROWS * COLS - TOTAL_MINES;
+  if (revealedCount >= nonMine) {
+    stopTimer();
+    gameOver = true;
+    // Auto-flag all mines
+    for (let i = 0; i < ROWS * COLS; i++) {
+      if (grid[i].mine && grid[i].state !== 'flagged') {
+        grid[i].state = 'flagged';
+        renderCell(i);
+      }
+    }
+    const isNew = updHS(timerVal);
+    document.getElementById('winTime').textContent = fmt(timerVal);
+    const best = getHS();
+    document.getElementById('winBest').textContent = fmtBest(best);
+    document.getElementById('bestVal').textContent = fmtBest(best);
+    document.getElementById('newRecord').classList.toggle('hidden', !isNew);
+    document.getElementById('winOverlay').classList.remove('hidden');
+    tone(523,100,'sine',0.1);
+    setTimeout(()=>tone(659,100,'sine',0.1),100);
+    setTimeout(()=>tone(784,200,'sine',0.1),200);
+  }
+}
+
+function triggerMine(idx) {
+  stopTimer();
+  gameOver = true;
+  grid[idx].state = 'exploded';
+  // Reveal all mines
+  for (let i = 0; i < ROWS * COLS; i++) {
+    if (grid[i].mine && grid[i].state !== 'exploded' && grid[i].state !== 'flagged') {
+      grid[i].state = 'revealed';
+    }
+  }
+  renderAll();
+  tone(80, 300, 'sawtooth', 0.15);
+  setTimeout(() => {
+    document.getElementById('loseOverlay').classList.remove('hidden');
+  }, 600);
+}
+
+function handleReveal(idx) {
+  if (gameOver) return;
+  const cell = grid[idx];
+  if (cell.state !== 'hidden') return;
+
+  if (firstClick) {
+    firstClick = false;
+    placeMines(idx);
+    startTimer();
+  }
+
+  if (cell.mine) {
+    triggerMine(idx);
+    return;
+  }
+
+  reveal(idx);
+  tone(330 + cell.adj * 30, 80, 'sine', 0.08);
+  checkWin();
+}
+
+function handleFlag(idx) {
+  if (gameOver || firstClick) return;
+  const cell = grid[idx];
+  if (cell.state === 'revealed') return;
+
+  if (cell.state === 'flagged') {
+    cell.state = 'hidden';
+    flagCount--;
+    tone(200, 80, 'sine', 0.06);
+  } else if (cell.state === 'hidden') {
+    cell.state = 'flagged';
+    flagCount++;
+    tone(440, 80, 'sine', 0.08);
+  }
+  renderCell(idx);
+  updateMineCount();
+}
+
+function buildBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  for (let i = 0; i < ROWS * COLS; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.dataset.idx = i;
+
+    // Mouse click
+    cell.addEventListener('click', (e) => {
+      if (longPressTriggered) { longPressTriggered = false; return; }
+      handleReveal(parseInt(cell.dataset.idx));
+    });
+
+    // Right click = flag
+    cell.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      handleFlag(parseInt(cell.dataset.idx));
+    });
+
+    // Touch long press = flag
+    cell.addEventListener('touchstart', (e) => {
+      longPressTriggered = false;
+      longPressTimer = setTimeout(() => {
+        longPressTriggered = true;
+        handleFlag(parseInt(cell.dataset.idx));
+        // Vibrate if supported
+        if (navigator.vibrate) navigator.vibrate(40);
+      }, 500);
+    }, { passive: true });
+
+    cell.addEventListener('touchend', () => {
+      if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+    });
+
+    cell.addEventListener('touchmove', () => {
+      if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+    }, { passive: true });
+
+    board.appendChild(cell);
+  }
+}
+
+function startGame() {
+  firstClick = true;
+  gameOver = false;
+  flagCount = 0;
+  revealedCount = 0;
+  stopTimer();
+  timerVal = 0;
+  document.getElementById('timerVal').textContent = '0';
+  document.getElementById('mineCount').textContent = TOTAL_MINES;
+  document.getElementById('startOverlay').classList.add('hidden');
+  document.getElementById('winOverlay').classList.add('hidden');
+  document.getElementById('loseOverlay').classList.add('hidden');
+  initGrid();
+  buildBoard();
+  renderAll();
+}
+
+// ── Init ──────────────────────────────────────────────────
+const savedBest = getHS();
+const bestDisplay = fmtBest(savedBest);
+document.getElementById('startBestVal').textContent = bestDisplay;
+document.getElementById('bestVal').textContent = bestDisplay;
+</script>
+</body>
+</html>
