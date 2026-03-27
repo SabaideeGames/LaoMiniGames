@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ເກີດດັບ</title>
+<style>
+:root{--bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);--text:#f0f0f5;--text2:#a0a0b8;--accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);--glow:rgba(124,58,237,0.3);--success:#10B981;--font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+.overlay{position:fixed;inset:0;z-index:100;background:rgba(15,15,26,0.92);backdrop-filter:blur(16px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;transition:opacity 0.4s}
+.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:3.5rem;margin-bottom:12px;animation:bounceIn 0.5s ease}
+.ov-title{font-size:2.2rem;font-weight:800;text-align:center;margin-bottom:6px}
+.ov-sub{font-size:0.95rem;color:var(--text2);text-align:center;margin-bottom:24px;max-width:300px}
+@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 36px;border:none;border-radius:999px;font-family:var(--font);font-size:1.1rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:200px}
+.btn:active{transform:scale(0.96)}
+.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}
+.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}
+.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px;align-items:center}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:320px;margin-bottom:24px}
+.stat-item{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}
+.stat-value{font-size:1.8rem;font-weight:700}
+.stat-label{font-size:0.7rem;color:var(--text2);margin-top:4px}
+.new-record{display:inline-flex;gap:6px;padding:4px 14px;border-radius:999px;font-size:0.8rem;font-weight:600;background:rgba(16,185,129,0.15);color:var(--success);margin-bottom:16px}
+.new-record.hidden{display:none}
+.game-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;z-index:10}
+.back-btn{width:40px;height:40px;border-radius:50%;background:var(--bg-glass);border:1px solid var(--border-glass);color:var(--text);font-size:1.2rem;display:flex;align-items:center;justify-content:center;text-decoration:none;cursor:pointer}
+.game-title{font-size:1rem;font-weight:700}
+.scores{display:flex;gap:14px}
+.score-box{text-align:center}
+.score-lbl{font-size:0.55rem;color:var(--text2)}
+.score-val{font-size:1rem;font-weight:700}
+.score-val.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sound-btn{position:fixed;top:12px;right:12px;z-index:200;width:40px;height:40px;padding:0;border-radius:50%;font-size:1.1rem;background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass);cursor:pointer;touch-action:manipulation}
+.start-best{margin-top:16px;text-align:center}
+.start-best-lbl{font-size:0.7rem;color:var(--text2)}
+.start-best-val{font-size:1.3rem;font-weight:700;background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* Game layout */
+.game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-around;padding:8px 16px;overflow:hidden}
+
+/* Battle display */
+.battle-area{width:100%;max-width:340px;background:var(--bg-glass);border:2px solid var(--border-glass);border-radius:24px;padding:20px 16px;display:flex;align-items:center;justify-content:space-between;transition:background 0.35s,border-color 0.35s}
+.battle-area.flash-win{background:rgba(16,185,129,0.18);border-color:rgba(16,185,129,0.55)}
+.battle-area.flash-lose{background:rgba(239,68,68,0.18);border-color:rgba(239,68,68,0.55)}
+.battle-area.flash-draw{background:rgba(245,158,11,0.18);border-color:rgba(245,158,11,0.55)}
+.battle-side{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1}
+.battle-emoji{font-size:4rem;line-height:1;display:block}
+.battle-emoji.reveal{animation:revealBounce 0.4s ease forwards}
+.battle-emoji.thinking{animation:thinkSpin 0.55s linear infinite}
+@keyframes revealBounce{0%{transform:scale(0) rotate(-20deg);opacity:0}60%{transform:scale(1.3) rotate(5deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+@keyframes thinkSpin{from{transform:rotate(0) scale(1.1)}to{transform:rotate(360deg) scale(1.1)}}
+.battle-label{font-size:0.75rem;color:var(--text2);font-weight:600}
+.vs-container{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:72px}
+.vs-text{font-size:1.4rem;font-weight:800;background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.round-result{font-size:0.9rem;font-weight:700;color:var(--text2);text-align:center;min-height:1.3em}
+.round-result.win{color:#10B981}
+.round-result.lose{color:#EF4444}
+.round-result.draw{color:#F59E0B}
+
+/* Round dots */
+.round-tracker{display:flex;gap:8px;align-items:center}
+.r-dot{width:38px;height:38px;border-radius:50%;background:var(--bg-glass);border:2px solid var(--border-glass);display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--text2);transition:all 0.3s;flex-shrink:0}
+.r-dot.current{border-color:#7C3AED;box-shadow:0 0 10px var(--glow);color:var(--text)}
+.r-dot.done{border-color:transparent;background:transparent}
+
+/* W D L */
+.wdl-row{display:flex;gap:28px;align-items:center}
+.wdl-item{text-align:center}
+.wdl-val{font-size:1.9rem;font-weight:700}
+.wdl-val.w{color:#10B981}
+.wdl-val.d{color:#F59E0B}
+.wdl-val.l{color:#EF4444}
+.wdl-lbl{font-size:0.6rem;color:var(--text2);margin-top:2px}
+
+/* Choice buttons */
+.choices{display:flex;gap:10px;justify-content:center;width:100%;max-width:340px}
+.choice-btn{flex:1;max-width:100px;aspect-ratio:1;border:1px solid var(--border-glass);border-radius:20px;background:var(--bg-glass);color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:all 0.2s;touch-action:manipulation;font-family:var(--font)}
+.choice-btn:hover,.choice-btn:active{transform:scale(1.08);background:rgba(124,58,237,0.2);border-color:#7C3AED;box-shadow:0 0 16px var(--glow)}
+.choice-btn:disabled{opacity:0.35;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.ch-emoji{font-size:2.4rem;line-height:1}
+.ch-lbl{font-size:0.7rem;color:var(--text2);font-weight:600}
+
+/* History row in overlay */
+.hist-row{display:flex;gap:8px;margin-bottom:20px}
+.hist-dot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;background:var(--bg-glass);border:1px solid var(--border-glass)}
+</style>
+</head>
+<body>
+
+<button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+<!-- Start Overlay -->
+<div class="overlay" id="startOverlay">
+  <div class="ov-emoji">🎮</div>
+  <div class="ov-title">ເກີດດັບ</div>
+  <div class="ov-sub">ເລືອກ: ກຳ, ແຜ່, ຫຼື ກຣ!</div>
+  <div class="start-best">
+    <div class="start-best-lbl">ດີທີ່ສຸດ</div>
+    <div class="start-best-val" id="startBest">0</div>
+  </div>
+  <br>
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="startGame()">▶ ເລີ່ມ</button>
+  </div>
+</div>
+
+<!-- Game Over Overlay -->
+<div class="overlay hidden" id="goOverlay">
+  <div class="ov-emoji" id="goEmoji">🎉</div>
+  <div class="ov-title" id="goTitle">ທ່ານຊະນະ!</div>
+  <div class="hist-row" id="histRow"></div>
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-value" style="color:#10B981" id="goW">0</div>
+      <div class="stat-label">ຊະນະ</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" style="color:#F59E0B" id="goD">0</div>
+      <div class="stat-label">ເສະມີ</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" style="color:#EF4444" id="goL">0</div>
+      <div class="stat-label">ແພ້</div>
+    </div>
+  </div>
+  <div class="new-record hidden" id="newRec">⭐ ສະຖິຕິໃໝ່!</div>
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="startGame()">🔄 ຫຼິ້ນໃໝ່</button>
+    <button class="btn btn-secondary" onclick="location.href='../index.html'">🏠 ໜ້າຫຼັກ</button>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="game-header">
+  <a href="../index.html" class="back-btn">‹</a>
+  <div class="game-title">ເກີດດັບ</div>
+  <div class="scores">
+    <div class="score-box">
+      <div class="score-lbl">ດີທີ່ສຸດ</div>
+      <div class="score-val best" id="hsVal">0</div>
+    </div>
+  </div>
+</div>
+
+<!-- Game Area -->
+<div class="game-area">
+
+  <div class="battle-area" id="battleArea">
+    <div class="battle-side">
+      <span class="battle-emoji" id="pEmoji">🤔</span>
+      <div class="battle-label">ທ່ານ</div>
+    </div>
+    <div class="vs-container">
+      <div class="vs-text">VS</div>
+      <div class="round-result" id="roundResult">ເລືອກ!</div>
+    </div>
+    <div class="battle-side">
+      <span class="battle-emoji" id="cEmoji">🤖</span>
+      <div class="battle-label">ຄອມ</div>
+    </div>
+  </div>
+
+  <div class="round-tracker" id="roundTracker">
+    <div class="r-dot current" id="d0">1</div>
+    <div class="r-dot" id="d1">2</div>
+    <div class="r-dot" id="d2">3</div>
+    <div class="r-dot" id="d3">4</div>
+    <div class="r-dot" id="d4">5</div>
+  </div>
+
+  <div class="wdl-row">
+    <div class="wdl-item">
+      <div class="wdl-val w" id="wVal">0</div>
+      <div class="wdl-lbl">ຊະນະ</div>
+    </div>
+    <div class="wdl-item">
+      <div class="wdl-val d" id="dVal">0</div>
+      <div class="wdl-lbl">ເສະມີ</div>
+    </div>
+    <div class="wdl-item">
+      <div class="wdl-val l" id="lVal">0</div>
+      <div class="wdl-lbl">ແພ້</div>
+    </div>
+  </div>
+
+  <div class="choices">
+    <button class="choice-btn" id="cb0" onclick="pick(0)">
+      <span class="ch-emoji">✊</span>
+      <span class="ch-lbl">ກຳ</span>
+    </button>
+    <button class="choice-btn" id="cb1" onclick="pick(1)">
+      <span class="ch-emoji">✋</span>
+      <span class="ch-lbl">ແຜ່</span>
+    </button>
+    <button class="choice-btn" id="cb2" onclick="pick(2)">
+      <span class="ch-emoji">✌️</span>
+      <span class="ch-lbl">ກຣ</span>
+    </button>
+  </div>
+
+</div>
+
+<script>
+const GID='rock-scissors';
+function sv(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function ld(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function getHS(){return ld('hs',0)}
+function updHS(s){const b=getHS();if(s>b){sv('hs',s);return true}return false}
+
+let aC=null,snd=true;
+function initA(){if(!aC)aC=new(window.AudioContext||window.webkitAudioContext)();if(aC.state==='suspended')aC.resume()}
+function tone(f,d,t='sine',v=0.12){if(!snd||!aC)return;try{const o=aC.createOscillator(),g=aC.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,aC.currentTime+d/1000);o.connect(g);g.connect(aC.destination);o.start();o.stop(aC.currentTime+d/1000)}catch(e){}}
+function toggleSound(){snd=!snd;document.getElementById('soundBtn').textContent=snd?'🔊':'🔇'}
+(function(){function u(){initA();document.removeEventListener('touchstart',u,true)}document.addEventListener('touchstart',u,true)})();
+
+const EMO=['✊','✋','✌️'];
+let W=0,D=0,L=0,hist=[],rnd=0,active=false,busy=false;
+
+function init(){
+  const hs=getHS();
+  document.getElementById('startBest').textContent=hs;
+  document.getElementById('hsVal').textContent=hs;
+}
+
+function startGame(){
+  W=0;D=0;L=0;hist=[];rnd=0;active=true;busy=false;
+  setBtns(true);
+  document.getElementById('pEmoji').textContent='🤔';
+  document.getElementById('cEmoji').textContent='🤖';
+  document.getElementById('cEmoji').className='battle-emoji';
+  document.getElementById('roundResult').textContent='ເລືອກ!';
+  document.getElementById('roundResult').className='round-result';
+  document.getElementById('battleArea').className='battle-area';
+  updateWDL();updateDots();
+  document.getElementById('startOverlay').classList.add('hidden');
+  document.getElementById('goOverlay').classList.add('hidden');
+}
+
+function setBtns(en){[0,1,2].forEach(i=>document.getElementById('cb'+i).disabled=!en)}
+
+function pick(p){
+  if(!active||busy)return;
+  busy=true;setBtns(false);initA();
+  const pe=document.getElementById('pEmoji');
+  const ce=document.getElementById('cEmoji');
+  const rr=document.getElementById('roundResult');
+  pe.className='battle-emoji reveal';
+  pe.textContent=EMO[p];
+  ce.textContent='❓';ce.className='battle-emoji thinking';
+  rr.textContent='ກຳລັງຄິດ...';rr.className='round-result';
+  tone(300,150,'sine',0.05);
+  setTimeout(()=>{
+    const c=Math.floor(Math.random()*3);
+    ce.className='battle-emoji reveal';
+    ce.textContent=EMO[c];
+    let res;
+    if(p===c)res='D';
+    else if((p-c+3)%3===1)res='W';
+    else res='L';
+    hist.push(res);rnd++;
+    const ba=document.getElementById('battleArea');
+    if(res==='W'){W++;rr.textContent='ຊະນະ! 🎉';rr.className='round-result win';ba.className='battle-area flash-win';tone(660,350,'sine',0.15);}
+    else if(res==='L'){L++;rr.textContent='ແຜ້! 😢';rr.className='round-result lose';ba.className='battle-area flash-lose';tone(200,400,'sawtooth',0.1);}
+    else{D++;rr.textContent='ເສະມີ! 🤝';rr.className='round-result draw';ba.className='battle-area flash-draw';tone(440,300,'sine',0.1);}
+    updateWDL();updateDots();
+    if(W>=3||L>=3||rnd>=5){setTimeout(showGO,1100);}
+    else{
+      setTimeout(()=>{
+        ba.className='battle-area';rr.textContent='ເລືອກ!';rr.className='round-result';
+        pe.className='battle-emoji';pe.textContent='🤔';
+        ce.className='battle-emoji';ce.textContent='🤖';
+        busy=false;setBtns(true);
+      },1100);
+    }
+  },600);
+}
+
+function updateWDL(){
+  document.getElementById('wVal').textContent=W;
+  document.getElementById('dVal').textContent=D;
+  document.getElementById('lVal').textContent=L;
+}
+
+function updateDots(){
+  for(let i=0;i<5;i++){
+    const d=document.getElementById('d'+i);
+    d.className='r-dot';
+    if(i<hist.length){d.classList.add('done');d.textContent=hist[i]==='W'?'✅':hist[i]==='L'?'❌':'🟡';}
+    else if(i===rnd&&active){d.classList.add('current');d.textContent=(i+1)+'';}
+    else{d.textContent=(i+1)+'';}
+  }
+}
+
+function showGO(){
+  active=false;
+  let em,title;
+  if(W>L){em='🎉';title='ທ່ານຊະນະ!';tone(880,500,'sine',0.15);}
+  else if(L>W){em='😢';title='ທ່ານແພ້!';tone(180,500,'sawtooth',0.1);}
+  else{em='🤝';title='ເສະມີ!';tone(440,400,'sine',0.1);}
+  document.getElementById('goEmoji').textContent=em;
+  document.getElementById('goTitle').textContent=title;
+  document.getElementById('goW').textContent=W;
+  document.getElementById('goD').textContent=D;
+  document.getElementById('goL').textContent=L;
+  document.getElementById('histRow').innerHTML=hist.map(r=>`<div class="hist-dot">${r==='W'?'✅':r==='L'?'❌':'🟡'}</div>`).join('');
+  const rec=updHS(W);
+  document.getElementById('newRec').classList.toggle('hidden',!rec);
+  const hs=getHS();
+  document.getElementById('hsVal').textContent=hs;
+  document.getElementById('startBest').textContent=hs;
+  document.getElementById('goOverlay').classList.remove('hidden');
+}
+
+init();
+</script>
+</body>
+</html>
