@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ຊູໂດຄຸ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);
+  --text:#f0f0f5;--text2:#a0a0b8;
+  --accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);
+  --glow:rgba(124,58,237,0.3);--success:#10B981;
+  --font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+
+/* Overlays */
+.overlay{position:fixed;inset:0;z-index:100;background:rgba(15,15,26,0.92);backdrop-filter:blur(16px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;transition:opacity 0.4s}
+.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:3.5rem;margin-bottom:12px;animation:bounceIn 0.5s ease}
+.ov-title{font-size:2.2rem;font-weight:800;text-align:center;margin-bottom:6px}
+.ov-sub{font-size:0.95rem;color:var(--text2);text-align:center;margin-bottom:24px;max-width:300px}
+@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 36px;border:none;border-radius:999px;font-family:var(--font);font-size:1.1rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:200px}
+.btn:active{transform:scale(0.96)}
+.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}
+.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}
+.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px;align-items:center}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}
+.stat-item{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}
+.stat-value{font-size:1.8rem;font-weight:700}
+.stat-value.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-label{font-size:0.7rem;color:var(--text2);margin-top:4px}
+.new-record{display:inline-flex;gap:6px;padding:4px 14px;border-radius:999px;font-size:0.8rem;font-weight:600;background:rgba(16,185,129,0.15);color:var(--success);margin-bottom:16px}
+.new-record.hidden{display:none}
+
+/* Game Header */
+.game-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;z-index:10}
+.back-btn{width:40px;height:40px;border-radius:50%;background:var(--bg-glass);border:1px solid var(--border-glass);color:var(--text);font-size:1.2rem;display:flex;align-items:center;justify-content:center;text-decoration:none;cursor:pointer}
+.game-title{font-size:1rem;font-weight:700}
+.scores{display:flex;gap:14px}
+.score-box{text-align:center}
+.score-lbl{font-size:0.55rem;color:var(--text2)}
+.score-val{font-size:1rem;font-weight:700}
+.score-val.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* Sound button */
+.sound-btn{position:fixed;top:12px;right:12px;z-index:200;width:40px;height:40px;padding:0;border-radius:50%;font-size:1.1rem;background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass);cursor:pointer;touch-action:manipulation}
+
+/* Start best */
+.start-best{margin-top:16px;text-align:center}
+.start-best-lbl{font-size:0.7rem;color:var(--text2)}
+.start-best-val{font-size:1.3rem;font-weight:700;background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* Game area */
+.game-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:12px 16px}
+
+/* Sudoku grid — nested 2×2 of 2×2 for clear box separation */
+.sudoku-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;
+  gap:5px;
+  width:min(292px,calc(100vw - 32px));
+  aspect-ratio:1;
+  padding:5px;
+  background:rgba(124,58,237,0.35);
+  border-radius:14px;
+}
+.sudoku-box{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;
+  gap:3px;
+  background:rgba(255,255,255,0.06);
+  border-radius:9px;
+  padding:3px;
+}
+.cell{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.65rem;
+  font-weight:700;
+  border-radius:7px;
+  background:var(--bg);
+  border:2px solid transparent;
+  cursor:pointer;
+  transition:background 0.15s, border-color 0.15s, box-shadow 0.15s, color 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.cell.given{
+  color:var(--text);
+  background:rgba(255,255,255,0.04);
+  cursor:default;
+}
+.cell.filled{
+  color:#93C5FD;
+}
+.cell.selected{
+  border-color:#7C3AED;
+  box-shadow:0 0 0 2px rgba(124,58,237,0.45);
+  background:rgba(124,58,237,0.22);
+}
+.cell.conflict{
+  color:#EF4444 !important;
+  border-color:#EF4444;
+  background:rgba(239,68,68,0.12);
+}
+.cell.selected.conflict{
+  box-shadow:0 0 0 2px rgba(239,68,68,0.45);
+}
+/* Highlight same-row/col/box as selected */
+.cell.highlight{
+  background:rgba(124,58,237,0.08);
+}
+
+/* Number pad */
+.numpad{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:center;
+}
+.num-btn{
+  width:52px;
+  height:52px;
+  border-radius:12px;
+  background:var(--bg-glass);
+  border:1px solid var(--border-glass);
+  color:var(--text);
+  font-family:var(--font);
+  font-size:1.4rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.15s;
+  touch-action:manipulation;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.num-btn:active{transform:scale(0.90);background:rgba(124,58,237,0.35)}
+.num-btn.erase{font-size:1.1rem;color:var(--text2)}
+
+/* Hint text */
+.hint-text{
+  font-size:0.78rem;
+  color:var(--text2);
+  text-align:center;
+  min-height:1.2em;
+}
+</style>
+</head>
+<body>
+
+<button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+<!-- Start Overlay -->
+<div class="overlay" id="startOverlay">
+  <div class="ov-emoji">🔢</div>
+  <div class="ov-title">ຊູໂດຄຸ</div>
+  <div class="ov-sub">ຕື່ມຕົວເລກ 1-4 ໃຫ້ຄົບ!</div>
+  <div class="start-best" id="startBest" style="display:none">
+    <div class="start-best-lbl">ສະຖິຕິດີທີ່ສຸດ</div>
+    <div class="start-best-val" id="startBestVal">--</div>
+  </div>
+  <br>
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="startGame()">▶ ເລີ່ມຫຼິ້ນ</button>
+  </div>
+</div>
+
+<!-- Win Overlay -->
+<div class="overlay hidden" id="winOverlay">
+  <div class="ov-emoji">🎉</div>
+  <div class="ov-title">ຊະນະ!</div>
+  <div class="new-record hidden" id="newRecord">⭐ ສະຖິຕິໃໝ່!</div>
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-value" id="winTime">0:00</div>
+      <div class="stat-label">ເວລາ</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value best" id="winBest">--</div>
+      <div class="stat-label">ດີທີ່ສຸດ</div>
+    </div>
+  </div>
+  <div class="btn-group">
+    <button class="btn btn-primary" id="nextBtn" onclick="nextPuzzle()">▶ ດ່ານຕໍ່ໄປ</button>
+    <button class="btn btn-secondary" onclick="goHome()">🏠 ໜ້າຫຼັກ</button>
+  </div>
+</div>
+
+<!-- Game -->
+<div class="game-header">
+  <a href="../index.html" class="back-btn" aria-label="ກັບໜ້າຫຼັກ">‹</a>
+  <span class="game-title">ຊູໂດຄຸ</span>
+  <div class="scores">
+    <div class="score-box">
+      <div class="score-lbl">ດ່ານ</div>
+      <div class="score-val" id="puzzleNum">1/3</div>
+    </div>
+    <div class="score-box">
+      <div class="score-lbl">ເວລາ</div>
+      <div class="score-val" id="timerDisplay">0:00</div>
+    </div>
+  </div>
+</div>
+
+<div class="game-area">
+  <div class="sudoku-grid" id="sudokuGrid"></div>
+  <div class="numpad">
+    <button class="num-btn" onclick="enterNum(1)" id="nb1">1</button>
+    <button class="num-btn" onclick="enterNum(2)" id="nb2">2</button>
+    <button class="num-btn" onclick="enterNum(3)" id="nb3">3</button>
+    <button class="num-btn" onclick="enterNum(4)" id="nb4">4</button>
+    <button class="num-btn erase" onclick="eraseNum()">✕</button>
+  </div>
+  <div class="hint-text" id="hintText">ເລືອກຊ່ອງ ແລ້ວກົດຕົວເລກ</div>
+</div>
+
+<script>
+const GID = 'sudoku-mini';
+function sv(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function ld(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function getHS(){return ld('hs',0)}
+function updHS(s){const b=getHS();if(b===0||s<b){sv('hs',s);return true}return false}
+
+// Audio
+let aC=null,snd=true;
+function initA(){if(!aC)aC=new(window.AudioContext||window.webkitAudioContext)();if(aC.state==='suspended')aC.resume()}
+function tone(f,d,t='sine',v=0.12){if(!snd||!aC)return;try{const o=aC.createOscillator(),g=aC.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,aC.currentTime+d/1000);o.connect(g);g.connect(aC.destination);o.start();o.stop(aC.currentTime+d/1000)}catch(e){}}
+function toggleSound(){snd=!snd;document.getElementById('soundBtn').textContent=snd?'🔊':'🔇'}
+(function(){function u(){initA();document.removeEventListener('touchstart',u,true)}document.addEventListener('touchstart',u,true)})();
+
+// Verified valid 4×4 sudoku puzzles
+const PUZZLES = [
+  {
+    given:   [[1,0,3,0],[0,4,0,2],[2,0,4,0],[0,1,0,3]],
+    solution:[[1,2,3,4],[3,4,1,2],[2,3,4,1],[4,1,2,3]]
+  },
+  {
+    given:   [[2,0,0,3],[0,4,2,0],[1,0,0,4],[0,3,1,0]],
+    solution:[[2,1,4,3],[3,4,2,1],[1,2,3,4],[4,3,1,2]]
+  },
+  {
+    given:   [[3,0,1,0],[0,1,0,2],[2,0,4,0],[0,4,0,3]],
+    solution:[[3,2,1,4],[4,1,3,2],[2,3,4,1],[1,4,2,3]]
+  }
+];
+
+let board = [], selR = -1, selC = -1;
+let puzzleIdx = 0, timerSec = 0, timerInt = null, gameActive = false;
+
+function fmt(s){return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}
+
+function startGame(){
+  initA();
+  document.getElementById('startOverlay').classList.add('hidden');
+  puzzleIdx = 0;
+  loadPuzzle(0);
+  startTimer();
+  gameActive = true;
+}
+
+function loadPuzzle(idx){
+  board = PUZZLES[idx].given.map(r => [...r]);
+  selR = -1; selC = -1;
+  renderGrid();
+  document.getElementById('puzzleNum').textContent = `${idx+1}/3`;
+  document.getElementById('hintText').textContent = 'ເລືອກຊ່ອງ ແລ້ວກົດຕົວເລກ';
+}
+
+function renderGrid(){
+  const g = document.getElementById('sudokuGrid');
+  g.innerHTML = '';
+  // Build 2×2 layout of boxes
+  [[0,0],[0,1],[1,0],[1,1]].forEach(([br,bc]) => {
+    const box = document.createElement('div');
+    box.className = 'sudoku-box';
+    for(let dr = 0; dr < 2; dr++){
+      for(let dc = 0; dc < 2; dc++){
+        const r = br*2+dr, c = bc*2+dc;
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.r = r; cell.dataset.c = c;
+        const val = board[r][c];
+        if(val !== 0){
+          cell.textContent = val;
+          if(PUZZLES[puzzleIdx].given[r][c] !== 0) cell.classList.add('given');
+          else cell.classList.add('filled');
+        }
+        cell.addEventListener('pointerdown', e => { e.preventDefault(); onCellClick(r, c); });
+        box.appendChild(cell);
+      }
+    }
+    g.appendChild(box);
+  });
+  updateHighlights();
+  updateConflicts();
+}
+
+function onCellClick(r, c){
+  initA();
+  if(PUZZLES[puzzleIdx].given[r][c] !== 0) return;
+  if(selR === r && selC === c){ selR = -1; selC = -1; }
+  else { selR = r; selC = c; tone(440, 60, 'sine', 0.08); }
+  updateHighlights();
+  updateConflicts();
+  document.getElementById('hintText').textContent =
+    (selR === -1) ? 'ເລືອກຊ່ອງ ແລ້ວກົດຕົວເລກ' : `ຊ່ອງ (${selR+1},${selC+1}) — ກົດຕົວເລກ`;
+}
+
+function updateHighlights(){
+  document.querySelectorAll('.cell').forEach(cell => {
+    const r = +cell.dataset.r, c = +cell.dataset.c;
+    cell.classList.remove('selected','highlight');
+    if(selR === -1) return;
+    if(r === selR && c === selC){ cell.classList.add('selected'); return; }
+    // Same row, col, or 2×2 box
+    if(r === selR || c === selC ||
+       (Math.floor(r/2) === Math.floor(selR/2) && Math.floor(c/2) === Math.floor(selC/2))){
+      cell.classList.add('highlight');
+    }
+  });
+}
+
+function enterNum(n){
+  initA();
+  if(selR === -1){ tone(200, 80, 'sine', 0.06); return; }
+  if(PUZZLES[puzzleIdx].given[selR][selC] !== 0) return;
+  board[selR][selC] = n;
+  tone(300 + n*50, 70, 'sine', 0.1);
+  renderGrid();
+  checkWin();
+}
+
+function eraseNum(){
+  initA();
+  if(selR === -1) return;
+  if(PUZZLES[puzzleIdx].given[selR][selC] !== 0) return;
+  board[selR][selC] = 0;
+  tone(220, 60, 'sine', 0.08);
+  renderGrid();
+}
+
+function getConflictSet(){
+  const cf = new Set();
+  for(let r = 0; r < 4; r++){
+    const seen = {};
+    for(let c = 0; c < 4; c++){
+      const v = board[r][c]; if(!v) continue;
+      if(seen[v] !== undefined){ cf.add(`${r},${seen[v]}`); cf.add(`${r},${c}`); }
+      else seen[v] = c;
+    }
+  }
+  for(let c = 0; c < 4; c++){
+    const seen = {};
+    for(let r = 0; r < 4; r++){
+      const v = board[r][c]; if(!v) continue;
+      if(seen[v] !== undefined){ cf.add(`${seen[v]},${c}`); cf.add(`${r},${c}`); }
+      else seen[v] = r;
+    }
+  }
+  for(let br = 0; br < 2; br++) for(let bc = 0; bc < 2; bc++){
+    const seen = {};
+    for(let dr = 0; dr < 2; dr++) for(let dc = 0; dc < 2; dc++){
+      const r = br*2+dr, c = bc*2+dc, v = board[r][c]; if(!v) continue;
+      const key = `${r},${c}`;
+      if(seen[v]){ cf.add(seen[v]); cf.add(key); } else seen[v] = key;
+    }
+  }
+  return cf;
+}
+
+function updateConflicts(){
+  const cf = getConflictSet();
+  document.querySelectorAll('.cell').forEach(cell => {
+    const key = `${cell.dataset.r},${cell.dataset.c}`;
+    cell.classList.toggle('conflict', cf.has(key) && board[+cell.dataset.r][+cell.dataset.c] !== 0);
+  });
+}
+
+function checkWin(){
+  const sol = PUZZLES[puzzleIdx].solution;
+  for(let r = 0; r < 4; r++)
+    for(let c = 0; c < 4; c++)
+      if(board[r][c] !== sol[r][c]) return;
+  winGame();
+}
+
+function startTimer(){
+  timerSec = 0;
+  if(timerInt) clearInterval(timerInt);
+  timerInt = setInterval(() => {
+    timerSec++;
+    document.getElementById('timerDisplay').textContent = fmt(timerSec);
+  }, 1000);
+}
+
+function stopTimer(){ clearInterval(timerInt); timerInt = null; }
+
+function winGame(){
+  stopTimer();
+  gameActive = false;
+  // Ascending win melody
+  [523,659,784,1047].forEach((f,i) => setTimeout(() => tone(f, 180, 'sine', 0.15), i*160));
+  const isNew = updHS(timerSec);
+  const best = getHS();
+  document.getElementById('winTime').textContent = fmt(timerSec);
+  document.getElementById('winBest').textContent = fmt(best);
+  document.getElementById('newRecord').classList.toggle('hidden', !isNew);
+  document.getElementById('nextBtn').textContent =
+    puzzleIdx === PUZZLES.length-1 ? '🔄 ຫຼິ້ນໃໝ່' : '▶ ດ່ານຕໍ່ໄປ';
+  setTimeout(() => document.getElementById('winOverlay').classList.remove('hidden'), 400);
+}
+
+function nextPuzzle(){
+  document.getElementById('winOverlay').classList.add('hidden');
+  puzzleIdx = (puzzleIdx + 1) % PUZZLES.length;
+  loadPuzzle(puzzleIdx);
+  startTimer();
+  gameActive = true;
+}
+
+function goHome(){ window.location.href = '../index.html'; }
+
+// Keyboard support (desktop)
+document.addEventListener('keydown', e => {
+  if(!gameActive) return;
+  if(e.key >= '1' && e.key <= '4') enterNum(+e.key);
+  if(e.key === 'Delete' || e.key === 'Backspace') eraseNum();
+  if(e.key === 'Escape'){ selR = -1; selC = -1; updateHighlights(); updateConflicts(); }
+});
+
+// Show best on start screen
+const hs = getHS();
+if(hs > 0){
+  document.getElementById('startBest').style.display = 'block';
+  document.getElementById('startBestVal').textContent = fmt(hs);
+}
+</script>
+</body>
+</html>

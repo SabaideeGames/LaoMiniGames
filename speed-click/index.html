@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ກົດໄວ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f0f1a;--bg-glass:rgba(255,255,255,0.08);--border-glass:rgba(255,255,255,0.12);
+  --text:#f0f0f5;--text2:#a0a0b8;
+  --accent-grad:linear-gradient(135deg,#7C3AED,#2563EB);
+  --glow:rgba(124,58,237,0.3);--success:#10B981;
+  --font:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{font-size:16px;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;user-select:none;-webkit-user-select:none;display:flex;flex-direction:column}
+
+/* Overlays */
+.overlay{position:fixed;inset:0;z-index:100;background:rgba(15,15,26,0.92);backdrop-filter:blur(16px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;transition:opacity 0.4s}
+.overlay.hidden{opacity:0;pointer-events:none}
+.ov-emoji{font-size:3.5rem;margin-bottom:12px;animation:bounceIn 0.5s ease}
+.ov-title{font-size:2.2rem;font-weight:800;text-align:center;margin-bottom:6px}
+.ov-sub{font-size:0.95rem;color:var(--text2);text-align:center;margin-bottom:24px;max-width:300px}
+@keyframes bounceIn{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 36px;border:none;border-radius:999px;font-family:var(--font);font-size:1.1rem;font-weight:600;cursor:pointer;transition:all 0.25s;touch-action:manipulation;min-width:200px}
+.btn:active{transform:scale(0.96)}
+.btn-primary{background:var(--accent-grad);color:white;box-shadow:0 0 20px var(--glow)}
+.btn-secondary{background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass)}
+.btn-group{display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px;align-items:center}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:300px;margin-bottom:24px}
+.stat-item{text-align:center;padding:14px 8px;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:12px}
+.stat-value{font-size:1.8rem;font-weight:700}
+.stat-value.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-label{font-size:0.7rem;color:var(--text2);margin-top:4px}
+.new-record{display:inline-flex;gap:6px;padding:4px 14px;border-radius:999px;font-size:0.8rem;font-weight:600;background:rgba(16,185,129,0.15);color:var(--success);margin-bottom:16px}
+.new-record.hidden{display:none}
+
+/* Game Header */
+.game-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;z-index:10;flex-shrink:0}
+.back-btn{width:40px;height:40px;border-radius:50%;background:var(--bg-glass);border:1px solid var(--border-glass);color:var(--text);font-size:1.2rem;display:flex;align-items:center;justify-content:center;text-decoration:none;cursor:pointer}
+.game-title{font-size:1rem;font-weight:700}
+.scores{display:flex;gap:14px}
+.score-box{text-align:center}
+.score-lbl{font-size:0.55rem;color:var(--text2)}
+.score-val{font-size:1rem;font-weight:700}
+.score-val.best{background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* Sound button */
+.sound-btn{position:fixed;top:12px;right:12px;z-index:200;width:40px;height:40px;padding:0;border-radius:50%;font-size:1.1rem;background:var(--bg-glass);color:var(--text);border:1px solid var(--border-glass);cursor:pointer;touch-action:manipulation}
+
+/* Start best */
+.start-best{margin-top:16px;text-align:center}
+.start-best-lbl{font-size:0.7rem;color:var(--text2)}
+.start-best-val{font-size:1.3rem;font-weight:700;background:var(--accent-grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* HUD bar */
+.hud{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:8px 28px 12px;
+  flex-shrink:0;
+}
+.hud-left{ text-align:center; }
+.hud-score-lbl{ font-size:0.65rem; color:var(--text2); letter-spacing:0.05em; text-transform:uppercase; }
+.hud-score{
+  font-size:2.8rem;
+  font-weight:800;
+  line-height:1;
+  background:var(--accent-grad);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  font-variant-numeric:tabular-nums;
+}
+.hud-timer{
+  font-size:3.2rem;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+  line-height:1;
+  transition:color 0.5s;
+  color:#10B981;
+}
+.hud-timer.yellow{ color:#F59E0B; }
+.hud-timer.red{
+  color:#EF4444;
+  animation:pulse 0.5s ease infinite alternate;
+}
+@keyframes pulse{ from{opacity:1} to{opacity:0.55} }
+
+/* Game area */
+.game-area{
+  flex:1;
+  position:relative;
+  overflow:hidden;
+  touch-action:none;
+}
+
+/* Circles */
+.circle{
+  position:absolute;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  touch-action:manipulation;
+  transform:scale(0);
+  transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  will-change:transform,opacity;
+  pointer-events:none;
+}
+.circle.spawned{
+  transform:scale(1);
+  pointer-events:auto;
+}
+.circle.popping{
+  transform:scale(0) !important;
+  opacity:0 !important;
+  transition:transform 0.15s ease-in, opacity 0.15s ease-in !important;
+  pointer-events:none !important;
+}
+.circle span{
+  color:white;
+  font-weight:800;
+  font-size:1rem;
+  text-shadow:0 1px 4px rgba(0,0,0,0.6);
+  pointer-events:none;
+  line-height:1;
+}
+
+/* Score pop animation */
+@keyframes scoreFloat{
+  0%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-48px) scale(1.3)}
+}
+.score-float{
+  position:absolute;
+  color:white;
+  font-size:1.4rem;
+  font-weight:800;
+  pointer-events:none;
+  z-index:20;
+  animation:scoreFloat 0.6s ease-out forwards;
+  text-shadow:0 0 10px rgba(124,58,237,0.8);
+}
+</style>
+</head>
+<body>
+
+<button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
+
+<!-- Start Overlay -->
+<div class="overlay" id="startOverlay">
+  <div class="ov-emoji">⚡</div>
+  <div class="ov-title">ກົດໄວ</div>
+  <div class="ov-sub">ກົດວົງກົມ ໃຫ້ໄວທີ່ສຸດ!</div>
+  <div class="start-best" id="startBest" style="display:none">
+    <div class="start-best-lbl">ສະຖິຕິດີທີ່ສຸດ</div>
+    <div class="start-best-val" id="startBestVal">0</div>
+  </div>
+  <br>
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="startGame()">▶ ເລີ່ມຫຼິ້ນ</button>
+  </div>
+</div>
+
+<!-- Game Over Overlay -->
+<div class="overlay hidden" id="gameOverOverlay">
+  <div class="ov-emoji">⏱️</div>
+  <div class="ov-title">ໝົດເວລາ!</div>
+  <div class="new-record hidden" id="goNewRecord">⭐ ສະຖິຕິໃໝ່!</div>
+  <div class="stats-grid">
+    <div class="stat-item">
+      <div class="stat-value" id="goScore">0</div>
+      <div class="stat-label">ວົງກົມທີ່ກົດ</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value best" id="goBest">0</div>
+      <div class="stat-label">ດີທີ່ສຸດ</div>
+    </div>
+  </div>
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="restartGame()">🔄 ຫຼິ້ນໃໝ່</button>
+    <button class="btn btn-secondary" onclick="goHome()">🏠 ໜ້າຫຼັກ</button>
+  </div>
+</div>
+
+<!-- Game UI -->
+<div class="game-header">
+  <a href="../index.html" class="back-btn" aria-label="ກັບໜ້າຫຼັກ">‹</a>
+  <span class="game-title">ກົດໄວ</span>
+  <div class="scores">
+    <div class="score-box">
+      <div class="score-lbl">ດີທີ່ສຸດ</div>
+      <div class="score-val best" id="headerBest">0</div>
+    </div>
+  </div>
+</div>
+
+<div class="hud">
+  <div class="hud-left">
+    <div class="hud-score-lbl">ຄະແນນ</div>
+    <div class="hud-score" id="scoreDisplay">0</div>
+  </div>
+  <div class="hud-timer" id="timerDisplay">30</div>
+</div>
+
+<div class="game-area" id="gameArea"></div>
+
+<script>
+const GID = 'speed-click';
+function sv(k,v){try{localStorage.setItem(`game_${GID}_${k}`,JSON.stringify(v))}catch(e){}}
+function ld(k,d=null){try{const r=localStorage.getItem(`game_${GID}_${k}`);return r!==null?JSON.parse(r):d}catch(e){return d}}
+function getHS(){return ld('hs',0)}
+function updHS(s){const b=getHS();if(s>b){sv('hs',s);return true}return false}
+
+// Audio
+let aC=null, snd=true;
+function initA(){if(!aC)aC=new(window.AudioContext||window.webkitAudioContext)();if(aC.state==='suspended')aC.resume()}
+function tone(f,d,t='sine',v=0.12){if(!snd||!aC)return;try{const o=aC.createOscillator(),g=aC.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;g.gain.exponentialRampToValueAtTime(0.001,aC.currentTime+d/1000);o.connect(g);g.connect(aC.destination);o.start();o.stop(aC.currentTime+d/1000)}catch(e){}}
+function toggleSound(){snd=!snd;document.getElementById('soundBtn').textContent=snd?'🔊':'🔇'}
+(function(){function u(){initA();document.removeEventListener('touchstart',u,true)}document.addEventListener('touchstart',u,true)})();
+
+// Circle colors (vivid gradient pairs)
+const COLORS = [
+  ['#FF6B6B','#FF8E53'],
+  ['#4ECDC4','#44A08D'],
+  ['#00C6FF','#0072FF'],
+  ['#F7971E','#FFD200'],
+  ['#ee0979','#ff6a00'],
+  ['#6a3093','#a044ff'],
+  ['#11998e','#38ef7d'],
+  ['#f953c6','#b91d73'],
+  ['#43CEA2','#185A9D'],
+  ['#FF512F','#DD2476'],
+  ['#56CCF2','#2F80ED'],
+  ['#F2994A','#F2C94C'],
+];
+
+let activeCircles = new Map(); // id → element
+let nextId = 0;
+let targetCount = 4;
+let score = 0;
+let timeLeft = 30;
+let timerInt = null;
+let capacityInt = null;
+let gameActive = false;
+
+function startGame(){
+  initA();
+  document.getElementById('startOverlay').classList.add('hidden');
+  resetState();
+  updateScore();
+  updateTimer();
+  spawnToTarget();
+  // Countdown timer
+  timerInt = setInterval(() => {
+    timeLeft--;
+    updateTimer();
+    if(timeLeft <= 0) endGame();
+  }, 1000);
+  // Increase circle count every 5 seconds, up to 8
+  capacityInt = setInterval(() => {
+    if(targetCount < 8){
+      targetCount++;
+      spawnToTarget();
+    }
+  }, 5000);
+  gameActive = true;
+}
+
+function resetState(){
+  // Remove leftover circles
+  activeCircles.forEach(el => el.parentNode && el.parentNode.removeChild(el));
+  activeCircles.clear();
+  nextId = 0;
+  targetCount = 4;
+  score = 0;
+  timeLeft = 30;
+  gameActive = false;
+}
+
+function restartGame(){
+  document.getElementById('gameOverOverlay').classList.add('hidden');
+  resetState();
+  startGame();
+}
+
+function goHome(){ window.location.href = '../index.html'; }
+
+function updateScore(){
+  document.getElementById('scoreDisplay').textContent = score;
+}
+
+function updateTimer(){
+  const el = document.getElementById('timerDisplay');
+  el.textContent = timeLeft;
+  el.classList.remove('yellow','red');
+  if(timeLeft <= 10) el.classList.add('red');
+  else if(timeLeft <= 20) el.classList.add('yellow');
+}
+
+function spawnToTarget(){
+  while(activeCircles.size < targetCount && gameActive !== false){
+    spawnCircle();
+  }
+}
+
+function spawnCircle(){
+  const gameArea = document.getElementById('gameArea');
+  const rect = gameArea.getBoundingClientRect();
+  if(rect.width === 0 || rect.height === 0) return;
+
+  const size = 50 + Math.floor(Math.random() * 21); // 50–70 px
+  const half = size / 2;
+  const x = half + Math.random() * (rect.width - size);
+  const y = half + Math.random() * (rect.height - size);
+
+  const [c1, c2] = COLORS[Math.floor(Math.random() * COLORS.length)];
+  const id = nextId++;
+
+  const el = document.createElement('div');
+  el.className = 'circle';
+  el.style.cssText =
+    `width:${size}px;height:${size}px;`+
+    `left:${x - half}px;top:${y - half}px;`+
+    `background:linear-gradient(135deg,${c1},${c2});`+
+    `box-shadow:0 0 18px ${c1}88,0 4px 12px rgba(0,0,0,0.35);`;
+  el.innerHTML = '<span>+1</span>';
+
+  // Tap/click handler — remove from map immediately to prevent double-pop
+  function onPop(e){
+    e.preventDefault();
+    e.stopPropagation();
+    if(!activeCircles.has(id) || !gameActive) return;
+    activeCircles.delete(id);
+    popCircle(id, el, x - half + half, y - half + half);
+  }
+  el.addEventListener('pointerdown', onPop);
+
+  gameArea.appendChild(el);
+  activeCircles.set(id, el);
+
+  // Trigger spawn animation after paint
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('spawned')));
+}
+
+function popCircle(id, el, px, py){
+  initA();
+  score++;
+  updateScore();
+
+  // Random pop tone
+  const freq = 380 + Math.floor(Math.random() * 320);
+  tone(freq, 100, 'sine', 0.14);
+
+  // Floating +1 label
+  const gameArea = document.getElementById('gameArea');
+  const fl = document.createElement('div');
+  fl.className = 'score-float';
+  fl.textContent = '+1';
+  fl.style.cssText = `left:${px}px;top:${py}px;transform:translateX(-50%)`;
+  gameArea.appendChild(fl);
+  setTimeout(() => fl.parentNode && fl.parentNode.removeChild(fl), 650);
+
+  // Pop animation, then remove element and respawn
+  el.classList.add('popping');
+  setTimeout(() => {
+    if(el.parentNode) el.parentNode.removeChild(el);
+    if(gameActive) setTimeout(() => spawnToTarget(), 180);
+  }, 150);
+}
+
+function endGame(){
+  gameActive = false;
+  clearInterval(timerInt);
+  clearInterval(capacityInt);
+
+  // Pop all remaining circles visually
+  activeCircles.forEach(el => {
+    el.classList.add('popping');
+    setTimeout(() => el.parentNode && el.parentNode.removeChild(el), 150);
+  });
+  activeCircles.clear();
+
+  // Fanfare
+  [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, 160, 'sine', 0.15), i*140));
+
+  const isNew = updHS(score);
+  const best = getHS();
+  document.getElementById('goScore').textContent = score;
+  document.getElementById('goBest').textContent = best;
+  document.getElementById('goNewRecord').classList.toggle('hidden', !isNew);
+  document.getElementById('headerBest').textContent = best;
+
+  setTimeout(() => document.getElementById('gameOverOverlay').classList.remove('hidden'), 350);
+}
+
+// Show best on start screen
+const hs = getHS();
+document.getElementById('headerBest').textContent = hs;
+if(hs > 0){
+  document.getElementById('startBest').style.display = 'block';
+  document.getElementById('startBestVal').textContent = hs;
+}
+</script>
+</body>
+</html>
